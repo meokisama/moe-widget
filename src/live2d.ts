@@ -256,7 +256,7 @@ export class Live2D extends Emitter<Live2DEvents> {
     model.look(clamp(x / (rect.width / 2)), clamp(-y / (rect.height / 2)));
   }
 
-  speak(voice: Voice, options: { signal?: AbortSignal } = {}): Promise<void> {
+  speak(voice: Voice, options: { signal?: AbortSignal | undefined } = {}): Promise<void> {
     this.#assertAlive();
     return this.#mouth.speak(voice, options.signal);
   }

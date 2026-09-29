@@ -82,7 +82,7 @@ function App() {
           ref={live2d}
           model={MODELS[name]}
           layout={layout}
-          {...(idle === DEFAULT ? {} : { idle: idle === OFF ? false : idle })}
+          idle={idle === DEFAULT ? undefined : idle === OFF ? false : idle}
           follow={follow}
           onLoad={(loaded, current) => {
             current.mouth = mouth;

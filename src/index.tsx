@@ -13,20 +13,20 @@ export type { Layout, ModelInfo, MotionEvent, MotionOptions, Priority, TapEvent 
 export type Live2DCanvasProps = Live2DOptions & {
   /** URL of the model3.json. Changing it loads the new model over the old one. */
   model: string;
-  className?: string;
-  style?: CSSProperties;
-  onLoad?: (model: ModelInfo, live2d: Live2DCanvasHandle) => void;
-  onError?: (error: unknown) => void;
+  className?: string | undefined;
+  style?: CSSProperties | undefined;
+  onLoad?: ((model: ModelInfo, live2d: Live2DCanvasHandle) => void) | undefined;
+  onError?: ((error: unknown) => void) | undefined;
   /**
    * Replaces the default reaction to a tap: a random expression on a hit area
    * named like "head", otherwise a motion from a group named like "tap", or
    * from any group but the idle one.
    */
-  onTap?: (event: TapEvent, live2d: Live2DCanvasHandle) => void;
-  onMotionStart?: (event: MotionEvent) => void;
-  onMotionEnd?: (event: MotionEvent) => void;
+  onTap?: ((event: TapEvent, live2d: Live2DCanvasHandle) => void) | undefined;
+  onMotionStart?: ((event: MotionEvent) => void) | undefined;
+  onMotionEnd?: ((event: MotionEvent) => void) | undefined;
   /** A user event fired from a motion's timeline. */
-  onMotionEvent?: (value: string) => void;
+  onMotionEvent?: ((value: string) => void) | undefined;
 };
 
 const FILL: CSSProperties = { display: "block", width: "100%", height: "100%" };
@@ -56,11 +56,7 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
     if (!element) return;
     let instance: Live2D | null = null;
     let cancelled = false;
-    const options: Live2DOptions = {};
-    if (pixelRatio !== undefined) options.pixelRatio = pixelRatio;
-    if (debug !== undefined) options.debug = debug;
-
-    Live2D.create(element, options).then(
+    Live2D.create(element, { pixelRatio, debug }).then(
       (created) => {
         if (cancelled) return created.destroy();
         instance = created;

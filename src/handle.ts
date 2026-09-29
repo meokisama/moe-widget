@@ -30,7 +30,7 @@ export type Live2DCanvasHandle = {
    * Plays a voice (a URL or a media element) or listens to a stream, and moves
    * the lips with it. Resolves when it ends, is stopped, or another voice starts.
    */
-  speak(voice: Voice, options?: { signal?: AbortSignal }): Promise<void>;
+  speak(voice: Voice, options?: { signal?: AbortSignal | undefined }): Promise<void>;
   /** Stops the voice started by `speak`. */
   hush(): void;
 };

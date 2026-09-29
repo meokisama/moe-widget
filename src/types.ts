@@ -10,46 +10,46 @@ export type Layout = {
    * fills the canvas and crops, `width` and `height` match that side.
    * @default "contain"
    */
-  fit?: "contain" | "cover" | "width" | "height";
+  fit?: "contain" | "cover" | "width" | "height" | undefined;
   /**
    * The part of the model's canvas to fit, as `[left, top, width, height]`
    * fractions of it. `[0, 0, 1, 0.5]` fits the upper half.
    * @default [0, 0, 1, 1]
    */
-  frame?: readonly [number, number, number, number];
+  frame?: readonly [number, number, number, number] | undefined;
   /**
    * Where the frame sits in the space left over, from `[0, 0]` (top left) to
    * `[1, 1]` (bottom right).
    * @default [0.5, 0.5]
    */
-  align?: readonly [number, number];
+  align?: readonly [number, number] | undefined;
   /** Multiplies the fitted size. @default 1 */
-  scale?: number;
+  scale?: number | undefined;
   /** Shifts the model, in CSS pixels. @default [0, 0] */
-  offset?: readonly [number, number];
+  offset?: readonly [number, number] | undefined;
 };
 
 export type Live2DOptions = {
-  layout?: Layout;
+  layout?: Layout | undefined;
   /**
    * What the model's eyes and head follow: the pointer anywhere on the page, only
    * over the canvas, or nothing.
    * @default "window"
    */
-  follow?: "window" | "canvas" | false;
+  follow?: "window" | "canvas" | false | undefined;
   /**
    * The motion group played whenever nothing else is, matched in any case.
    * By default "idle", if the model has one. A change takes over once the
    * motion playing ends.
    */
-  idle?: string | false;
+  idle?: string | false | undefined;
   /**
    * Drawing-buffer pixels per CSS pixel.
    * @default Math.min(devicePixelRatio, 2)
    */
-  pixelRatio?: number;
+  pixelRatio?: number | undefined;
   /** Logs Cubism's messages to the console. @default false */
-  debug?: boolean;
+  debug?: boolean | undefined;
 };
 
 export type LoadOptions = {
@@ -66,9 +66,9 @@ export type LoadOptions = {
 
 export type MotionOptions = {
   /** The motion's index in its group. Random by default, avoiding the last one played. */
-  index?: number;
+  index?: number | undefined;
   /** @default "normal" */
-  priority?: Priority;
+  priority?: Priority | undefined;
 };
 
 export type ModelInfo = {
