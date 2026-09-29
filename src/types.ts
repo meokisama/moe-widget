@@ -1,6 +1,6 @@
 /**
- * How urgently a motion should play. `idle` yields to everything, `normal` waits
- * for a running `normal` motion to end, `force` interrupts whatever is playing.
+ * How urgently a motion should play. `idle` yields to everything, `normal` is
+ * refused while a `normal` or `force` motion plays, `force` interrupts whatever is playing.
  */
 export type Priority = "idle" | "normal" | "force";
 

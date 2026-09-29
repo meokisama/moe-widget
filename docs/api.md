@@ -83,7 +83,7 @@ A press that moves more than 10 px is a drag and fires no tap.
 | Type            |                                                                                                                       |
 | --------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `MotionOptions` | `{ index?, priority? }`, the second argument of `motion`.                                                             |
-| `Priority`      | `"idle"` yields to everything, `"normal"` (the default) waits for a running `normal` motion to end, `"force"` interrupts. |
+| `Priority`      | `"idle"` yields to everything, `"normal"` (the default) is refused while a `normal` or `force` motion plays, `"force"` interrupts. |
 | `MotionEvent`   | `{ group, index }`, passed to `onMotionStart` and `onMotionEnd`.                                                      |
 | `Voice`         | A URL, an `HTMLMediaElement`, or a `MediaStream`.                                                                     |
 | `LoadProgress`  | `{ loaded, total }`, passed to `onProgress`.                                                                          |
