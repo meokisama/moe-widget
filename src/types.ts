@@ -52,9 +52,13 @@ export type Live2DOptions = {
   debug?: boolean | undefined;
 };
 
+/** Fetches one of a model's files, documented on `Live2DCanvasProps.fetch`. */
+export type Fetch = (url: URL, init: RequestInit) => Promise<Response>;
+
 export type LoadOptions = {
   /** Abandons the load. The promise rejects with an `AbortError`. */
   signal?: AbortSignal;
+  fetch?: Fetch | undefined;
   /** Replaces the layout for this model. */
   layout?: Layout;
   /**

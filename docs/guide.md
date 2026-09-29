@@ -91,6 +91,25 @@ Choose the part of the model to show and how to fit it:
 
 Every value is relative, so the same layout works at any canvas size.
 
+## Serving the files yourself
+
+`fetch` replaces how each file is fetched, while the model3.json still decides which files. Resolved URLs keep the model's scheme and folder, so any scheme works as a key:
+
+```tsx
+import { unzipSync } from "fflate";
+
+// A model the user picked, unzipped in memory.
+const files = unzipSync(new Uint8Array(await file.arrayBuffer()));
+const fromZip = async (url: URL) => {
+  const data = files[decodeURIComponent(url.pathname.slice(1))];
+  return data ? new Response(new Blob([data])) : new Response(null, { status: 404 });
+};
+
+<Live2DCanvas model="zip:/Mao/Mao.model3.json" fetch={fromZip} />;
+```
+
+The same prop adds an auth header, reads from a cache, or signs each URL. Define it outside the component or in `useCallback`: it is read when a load starts, so a new function reaches only the next model.
+
 ## Server rendering
 
 `Live2DCanvas` is a client component (`"use client"`), so it works from a Next.js server component as is. Importing the package on the server touches nothing browser-only.

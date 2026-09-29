@@ -7,6 +7,7 @@ Everything is imported from `moe-widget`. For how to use it, see the [guide](./g
 | Prop                                                               | Default                    |                                                                                                                 |
 | ------------------------------------------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `model`                                                            |                            | URL of the model3.json. Required. Changing it loads the new model over the old one.                             |
+| `fetch(url, init)`                                                 | `fetch`                    | Fetches each of the model's files, at URLs resolved against `model`. Returns a `Response`; one that is not ok fails the load. Read when a load starts, so changing it does not reload the model. |
 | `layout`                                                           | `{}`                       | A [`Layout`](#layout). Changing it moves the model without reloading it.                                        |
 | `follow`                                                           | `"window"`                 | What the eyes follow: the pointer anywhere, `"canvas"` only over it, or `false`.                                |
 | `idle`                                                             | `"idle"`                   | The motion group played when nothing else is, in any case, or `false`.                                          |
@@ -81,4 +82,5 @@ A press that moves more than 10 px is a drag and fires no tap.
 | `Priority`      | `"idle"` yields to everything, `"normal"` (the default) waits for a running `normal` motion to end, `"force"` interrupts. |
 | `MotionEvent`   | `{ group, index }`, passed to `onMotionStart` and `onMotionEnd`.                                                      |
 | `Voice`         | A URL, an `HTMLMediaElement`, or a `MediaStream`.                                                                     |
+| `Fetch`         | `(url: URL, init: RequestInit) => Promise<Response>`, the type of the `fetch` prop.                                   |
 | `Live2DCanvasProps` | The props above.                                                                                                  |

@@ -178,6 +178,8 @@ export class Live2D extends Emitter<Live2DEvents> {
         width: this.canvas.width,
         height: this.canvas.height,
         signal: controller.signal,
+        // Called through a wrapper: the page's fetch throws when called on another object.
+        fetch: options.fetch ?? ((url, init) => fetch(url, init)),
         idle,
         mouth: options.mouth,
         hooks: {

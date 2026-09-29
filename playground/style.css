@@ -286,6 +286,27 @@ select {
   border-radius: 12px;
 }
 
+.picker {
+  display: flex;
+  gap: 6px;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  color: var(--accent);
+  background: var(--control);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: border-color 0.15s;
+}
+
+.icon:hover {
+  border-color: var(--lavender);
+}
+
 .buttons {
   display: flex;
   flex-wrap: wrap;

@@ -24,7 +24,7 @@ import { IParameterProvider } from "../cubism/motion/iparameterprovider";
 import { CubismWebGLOffscreenManager } from "../cubism/rendering/cubismoffscreenmanager";
 import { CubismShaderManager_WebGL } from "../cubism/rendering/cubismshader_webgl";
 import type { Bounds } from "./layout";
-import type { ModelInfo, MotionOptions, Priority } from "./types";
+import type { Fetch, ModelInfo, MotionOptions, Priority } from "./types";
 
 // ---------------------------------------------------------------------------
 // Framework lifetime
@@ -80,6 +80,7 @@ export type ModelSetup = {
   width: number;
   height: number;
   signal?: AbortSignal | undefined;
+  fetch: Fetch;
   idle?: string | false | undefined;
   mouth?: readonly string[] | undefined;
   hooks: Hooks;
@@ -89,15 +90,6 @@ function abortError(): DOMException {
   return new DOMException("The model load was aborted.", "AbortError");
 }
 
-async function fetchOk(url: URL, signal: AbortSignal | undefined): Promise<Response> {
-  const response = await fetch(url, signal ? { signal } : {});
-  if (!response.ok) throw new Error(`moe-widget: ${response.status} ${response.statusText} for ${url}`);
-  return response;
-}
-
-async function fetchBuffer(url: URL, signal: AbortSignal | undefined): Promise<ArrayBuffer> {
-  return (await fetchOk(url, signal)).arrayBuffer();
-}
 
 class MouthProvider extends IParameterProvider {
   value = 0;
@@ -121,6 +113,7 @@ export class Model extends CubismUserModel {
   #base!: URL;
   #setting!: CubismModelSettingJson;
   #hooks: Hooks;
+  #fetch: Fetch;
   #signal: AbortSignal | undefined;
   #scheduler = new CubismUpdateScheduler();
   #look: CubismLook | null = null;
@@ -140,18 +133,19 @@ export class Model extends CubismUserModel {
   #size: [number, number] = [0, 0];
   #released = false;
 
-  private constructor(gl: WebGLRenderingContext, hooks: Hooks, signal: AbortSignal | undefined) {
+  private constructor(gl: WebGLRenderingContext, setup: ModelSetup) {
     super();
     this.#gl = gl;
-    this.#hooks = hooks;
-    this.#signal = signal;
+    this.#hooks = setup.hooks;
+    this.#fetch = setup.fetch;
+    this.#signal = setup.signal;
     this._mocConsistency = true;
     this._motionConsistency = true;
   }
 
   /** Loads a model3.json and everything it references. Rejects rather than hanging. */
   static async load(url: string, setup: ModelSetup): Promise<Model> {
-    const model = new Model(setup.gl, setup.hooks, setup.signal);
+    const model = new Model(setup.gl, setup);
     try {
       await model.#load(url, setup);
       return model;
@@ -159,6 +153,16 @@ export class Model extends CubismUserModel {
       model.release();
       throw error;
     }
+  }
+
+  async #response(url: URL, signal: AbortSignal | undefined): Promise<Response> {
+    const response = await this.#fetch(url, signal ? { signal } : {});
+    if (!response.ok) throw new Error(`moe-widget: ${response.status} ${response.statusText} for ${url}`);
+    return response;
+  }
+
+  async #buffer(url: URL, signal: AbortSignal | undefined): Promise<ArrayBuffer> {
+    return (await this.#response(url, signal)).arrayBuffer();
   }
 
   #check(): void {
@@ -171,7 +175,7 @@ export class Model extends CubismUserModel {
     this.#base = new URL(url, document.baseURI);
     const file = (name: string) => new URL(name, this.#base);
 
-    const json = await fetchBuffer(this.#base, signal);
+    const json = await this.#buffer(this.#base, signal);
     this.#check();
     const setting = new CubismModelSettingJson(json, json.byteLength);
     this.#setting = setting;
@@ -180,15 +184,15 @@ export class Model extends CubismUserModel {
     if (!mocName) throw new Error(`moe-widget: ${url} names no .moc3 file`);
 
     // Everything but the moc is optional, so fetch it all at once.
-    const optional = (name: string) => (name ? fetchBuffer(file(name), signal) : Promise.resolve(null));
+    const optional = (name: string) => (name ? this.#buffer(file(name), signal) : Promise.resolve(null));
     const expressionNames = Array.from({ length: setting.getExpressionCount() }, (_, i) => setting.getExpressionName(i));
     const textureNames = Array.from({ length: setting.getTextureCount() }, (_, i) => setting.getTextureFileName(i));
     const [moc, physics, pose, userData, expressions, images] = await Promise.all([
-      fetchBuffer(file(mocName), signal),
+      this.#buffer(file(mocName), signal),
       optional(setting.getPhysicsFileName()),
       optional(setting.getPoseFileName()),
       optional(setting.getUserDataFile()),
-      Promise.all(expressionNames.map((_, i) => fetchBuffer(file(setting.getExpressionFileName(i)), signal))),
+      Promise.all(expressionNames.map((_, i) => this.#buffer(file(setting.getExpressionFileName(i)), signal))),
       Promise.all(textureNames.map((name) => (name ? this.#loadImage(file(name), signal) : null))),
     ]);
     this.#images = images.filter((image): image is ImageBitmap => image !== null);
@@ -301,7 +305,7 @@ export class Model extends CubismUserModel {
   }
 
   async #loadImage(url: URL, signal: AbortSignal | undefined): Promise<ImageBitmap> {
-    const blob = await (await fetchOk(url, signal)).blob();
+    const blob = await (await this.#response(url, signal)).blob();
     // Premultiplied like Live2D's samples; the renderer is told the same below.
     return createImageBitmap(blob, { premultiplyAlpha: "premultiply", colorSpaceConversion: "none" });
   }
@@ -363,7 +367,7 @@ export class Model extends CubismUserModel {
     let loading = this.#motions.get(key);
     if (!loading) {
       const name = this.#setting.getMotionFileName(group, index);
-      loading = fetchBuffer(new URL(name, this.#base), undefined).then((buffer) => {
+      loading = this.#buffer(new URL(name, this.#base), undefined).then((buffer) => {
         if (this.#released) return null;
         const motion = this.loadMotion(
           buffer,

@@ -1,6 +1,7 @@
 import { type CSSProperties, type ReactNode, type RefObject, StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type ModelInfo } from "moe-widget";
+import { type Source, sourceFromZip } from "./zip";
 
 // Relative, so the build works under any path, such as GitHub Pages' /moe-widget/.
 const MODELS = {
@@ -8,8 +9,6 @@ const MODELS = {
   Zundamon: "./zundamon/zundamon.model3.json",
   Roro: "./roro/roro.model3.json",
 };
-
-type ModelName = keyof typeof MODELS;
 
 type Follow = NonNullable<Live2DCanvasProps["follow"]>;
 
@@ -180,14 +179,17 @@ function App() {
   const live2d = useRef<Live2DCanvasHandle>(null);
   // Changing the key remounts the canvas: the React way to destroy and recreate.
   const [instance, setInstance] = useState(0);
-  const [name, setName] = useState<ModelName>("Mao");
+  const [name, setName] = useState("Mao");
+  // Keyed by file name, whose ".zip" keeps it apart from the sample models.
+  const [uploads, setUploads] = useState<Record<string, Source>>({});
+  const upload = useRef<HTMLInputElement>(null);
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [loadMs, setLoadMs] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lines, setLines] = useState<string[]>([]);
   const stage = useRef<HTMLElement>(null);
   const [view, setView] = usePanZoom(stage);
-  const [force, setForce] = useState(false);
+  const [force, setForce] = useState(true);
   const [mouth, setMouth] = useState(0);
   const [idle, setIdle] = useState(DEFAULT);
   const [follow, setFollow] = useState<Follow>("window");
@@ -204,11 +206,24 @@ function App() {
     setError(null);
   }
 
-  function choose(next: ModelName) {
+  function choose(next: string) {
     restartClock();
     setIdle(DEFAULT);
     setName(next);
   }
+
+  async function open(file: File) {
+    try {
+      const source = await sourceFromZip(file);
+      setUploads((previous) => ({ ...previous, [file.name]: source }));
+      choose(file.name);
+      log(`opened ${file.name}`);
+    } catch (failure) {
+      setError(String(failure));
+    }
+  }
+
+  const source = uploads[name] ?? { url: MODELS[name as keyof typeof MODELS] };
 
   async function motion(group: string, index: number) {
     const finished = await live2d.current?.motion(group, { index, priority: force ? "force" : "normal" });
@@ -229,11 +244,21 @@ function App() {
 
   return (
     <main>
-      <section className="stage" ref={stage}>
+      <section
+        className="stage"
+        ref={stage}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          const file = event.dataTransfer.files[0];
+          if (file) void open(file);
+        }}
+      >
         <Live2DCanvas
           key={instance}
           ref={live2d}
-          model={MODELS[name]}
+          model={source.url}
+          fetch={source.fetch}
           layout={layout}
           idle={idle === DEFAULT ? undefined : idle === OFF ? false : idle}
           follow={follow}
@@ -267,7 +292,7 @@ function App() {
             )}
           </div>
         </div>
-        <p className="overlay hint">Tap the character ♡ · Drag to move · Scroll or pinch to zoom</p>
+        <p className="overlay hint">Tap the character ♡ · Drag to move · Scroll or pinch to zoom · Drop a model zip</p>
       </section>
 
       <aside className="panel">
@@ -276,11 +301,35 @@ function App() {
         </header>
 
         <Card title="Model">
-          <select aria-label="Model" value={name} onChange={(event) => choose(event.target.value as ModelName)}>
-            {keysOf(MODELS).map((model) => (
-              <option key={model}>{model}</option>
-            ))}
-          </select>
+          <div className="picker">
+            <select aria-label="Model" value={name} onChange={(event) => choose(event.target.value)}>
+              {[...keysOf(MODELS), ...Object.keys(uploads)].map((model) => (
+                <option key={model}>{model}</option>
+              ))}
+            </select>
+            <button className="icon" title="Open a model zip" aria-label="Open a model zip" onClick={() => upload.current?.click()}>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M2 4.5A1.5 1.5 0 0 1 3.5 3h3l1.5 1.5h4.5A1.5 1.5 0 0 1 14 6v5.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <input
+            ref={upload}
+            type="file"
+            accept=".zip"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void open(file);
+            }}
+          />
         </Card>
 
         <Card

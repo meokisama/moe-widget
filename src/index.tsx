@@ -4,15 +4,21 @@ import { type CSSProperties, forwardRef, useEffect, useImperativeHandle, useRef,
 import { type Live2DCanvasHandle, handleOf } from "./handle";
 import { Live2D } from "./live2d";
 import { reactToTap } from "./tap";
-import type { Layout, Live2DOptions, ModelInfo, MotionEvent, TapEvent } from "./types";
+import type { Fetch, Layout, Live2DOptions, ModelInfo, MotionEvent, TapEvent } from "./types";
 
 export type { Live2DCanvasHandle } from "./handle";
 export type { Voice } from "./mouth";
-export type { Layout, ModelInfo, MotionEvent, MotionOptions, Priority, TapEvent } from "./types";
+export type { Fetch, Layout, ModelInfo, MotionEvent, MotionOptions, Priority, TapEvent } from "./types";
 
 export type Live2DCanvasProps = Live2DOptions & {
   /** URL of the model3.json. Changing it loads the new model over the old one. */
   model: string;
+  /**
+   * Fetches each of the model's files, at URLs resolved against `model`. Read when a
+   * load starts, so changing it does not reload the model.
+   * @default fetch
+   */
+  fetch?: Fetch | undefined;
   className?: string | undefined;
   style?: CSSProperties | undefined;
   onLoad?: ((model: ModelInfo, live2d: Live2DCanvasHandle) => void) | undefined;
@@ -99,7 +105,8 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
   useEffect(() => {
     if (!live2d) return;
     const controller = new AbortController();
-    live2d.load(model, { signal: controller.signal, layout: JSON.parse(layoutKey) as Layout }).then(
+    const { fetch } = handlers.current;
+    live2d.load(model, { signal: controller.signal, fetch, layout: JSON.parse(layoutKey) as Layout }).then(
       (info) => {
         setLoaded(true);
         handlers.current.onLoad?.(info, handleOf(live2d));
