@@ -74,7 +74,7 @@ export class Mouth {
       };
       const fail = () => {
         finish();
-        reject(new Error(`moe-widget: could not play ${element?.currentSrc || "the voice"}`));
+        reject(new Error(`moe2d: could not play ${element?.currentSrc || "the voice"}`));
       };
       this.#stop = finish;
       signal?.addEventListener("abort", finish, { once: true });

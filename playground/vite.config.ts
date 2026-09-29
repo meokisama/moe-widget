@@ -6,6 +6,6 @@ export default defineConfig({
   base: "./",
   publicDir: "models",
   resolve: {
-    alias: [{ find: /^moe-widget$/, replacement: fileURLToPath(new URL("../src/index.tsx", import.meta.url)) }],
+    alias: [{ find: /^moe2d$/, replacement: fileURLToPath(new URL("../src/index.tsx", import.meta.url)) }],
   },
 });

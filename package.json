@@ -1,5 +1,5 @@
 {
-  "name": "moe-widget",
+  "name": "moe2d",
   "version": "0.1.0",
   "description": "Adorable Live2D characters that live on your web pages.",
   "keywords": [
@@ -15,7 +15,7 @@
   "homepage": "https://moe.meoki.vn",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/meokisama/moe-widget.git"
+    "url": "git+https://github.com/meokisama/moe2d.git"
   },
   "type": "module",
   "sideEffects": false,

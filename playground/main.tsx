@@ -1,9 +1,9 @@
 import { type CSSProperties, type ReactNode, type RefObject, StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type LoadProgress, type ModelInfo } from "moe-widget";
+import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type LoadProgress, type ModelInfo } from "moe2d";
 import { type Source, sourceFromZip } from "./zip";
 
-// Relative, so the build works under any path, such as GitHub Pages' /moe-widget/.
+// Relative, so the build works under any path, such as GitHub Pages' /moe2d/.
 const MODELS = {
   Mao: "./mao/Mao.model3.json",
   Zundamon: "./zundamon/zundamon.model3.json",
@@ -16,7 +16,7 @@ type Follow = NonNullable<Live2DCanvasProps["follow"]>;
 const DEFAULT = "";
 const OFF = "(off)";
 
-const LOGO = new URL("./logo.webp", import.meta.url).href;
+const LOGO = new URL("./logo.png", import.meta.url).href;
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 5;
@@ -305,7 +305,7 @@ function App() {
 
       <aside className="panel">
         <header className="brand">
-          <img src={LOGO} alt="moe-widget" width={220} height={152} />
+          <img src={LOGO} alt="moe2d" width={220} height={95} />
         </header>
 
         <Card title="Model">

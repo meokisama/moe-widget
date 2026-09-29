@@ -1,6 +1,6 @@
 # API
 
-Everything is imported from `moe-widget`. For how to use it, see the [guide](./guide.md).
+Everything is imported from `moe2d`. For how to use it, see the [guide](./guide.md).
 
 ## `<Live2DCanvas>` props
 

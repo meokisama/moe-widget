@@ -28,7 +28,7 @@ function loadRuntime(): Promise<Runtime> {
       // Another script got there first; there can only be one Core per page.
       const major = scope.Live2DCubismCore.Version.csmGetVersion() >>> 24;
       if (major < CORE_MAJOR) {
-        console.warn(`moe-widget: the page already loaded Cubism Core ${major}, older than ${CORE_MAJOR}. Models using blend modes will not render correctly.`);
+        console.warn(`moe2d: the page already loaded Cubism Core ${major}, older than ${CORE_MAJOR}. Models using blend modes will not render correctly.`);
       }
     } else {
       scope.Live2DCubismCore = (await import("../cubism/core.js")).default;
@@ -90,7 +90,7 @@ export class Live2D extends Emitter<Live2DEvents> {
       stencil: false,
     };
     const gl = canvas.getContext("webgl2", attributes) ?? canvas.getContext("webgl", attributes);
-    if (!gl) throw new Error("moe-widget: this browser or canvas cannot create a WebGL context");
+    if (!gl) throw new Error("moe2d: this browser or canvas cannot create a WebGL context");
 
     this.canvas = canvas;
     this.#gl = gl;
@@ -223,7 +223,7 @@ export class Live2D extends Emitter<Live2DEvents> {
       this.#placement = null;
       // display: none leaves no client rects, and is a deliberate way to hide the canvas.
       if (this.canvas.getClientRects().length > 0 && (!this.canvas.clientWidth || !this.canvas.clientHeight)) {
-        console.warn("moe-widget: the canvas has no width or height, so nothing shows. Give its parent a size.");
+        console.warn("moe2d: the canvas has no width or height, so nothing shows. Give its parent a size.");
       }
       this.emit("load", model.info);
       return model.info;
@@ -294,7 +294,7 @@ export class Live2D extends Emitter<Live2DEvents> {
       .speak(audio)
       .catch((error: unknown) => {
         // Browsers block sound until the page has had a user gesture.
-        if (!(error instanceof DOMException && error.name === "NotAllowedError")) console.warn("moe-widget:", error);
+        if (!(error instanceof DOMException && error.name === "NotAllowedError")) console.warn("moe2d:", error);
       })
       .finally(() => {
         audio.pause();
@@ -322,12 +322,12 @@ export class Live2D extends Emitter<Live2DEvents> {
   }
 
   #assertAlive(): void {
-    if (this.#destroyed) throw new Error("moe-widget: this Live2D instance was destroyed");
+    if (this.#destroyed) throw new Error("moe2d: this Live2D instance was destroyed");
   }
 
   #require(): Model {
     this.#assertAlive();
-    if (!this.#model) throw new Error("moe-widget: no model is loaded yet; await load() first");
+    if (!this.#model) throw new Error("moe2d: no model is loaded yet; await load() first");
     return this.#model;
   }
 

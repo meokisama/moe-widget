@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="./assets/moe.png" alt="moe-widget" width="360" />
+<img src="./assets/moe2d.png" alt="moe2d" width="480" />
 
 **Adorable Live2D characters that live on your web pages.**
 
 <p>
-  <a href="https://www.npmjs.com/package/moe-widget"><img src="https://img.shields.io/npm/v/moe-widget?style=flat-square&color=ff8fc7&labelColor=4b2a8a" alt="npm version" /></a>
-  <a href="https://github.com/meokisama/moe-widget/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/meokisama/moe-widget/ci.yml?style=flat-square&color=8b6cf0&labelColor=4b2a8a&label=ci" alt="CI" /></a>
+  <a href="https://www.npmjs.com/package/moe2d"><img src="https://img.shields.io/npm/v/moe2d?style=flat-square&color=ff8fc7&labelColor=4b2a8a" alt="npm version" /></a>
+  <a href="https://github.com/meokisama/moe2d/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/meokisama/moe2d/ci.yml?style=flat-square&color=8b6cf0&labelColor=4b2a8a&label=ci" alt="CI" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-b79cf5?style=flat-square&labelColor=4b2a8a" alt="MIT license" /></a>
 </p>
 
@@ -26,7 +26,7 @@
 ## Install
 
 ```sh
-npm install moe-widget
+npm install moe2d
 ```
 
 Needs React 18 or newer.
@@ -34,7 +34,7 @@ Needs React 18 or newer.
 ## Quick start
 
 ```tsx
-import { Live2DCanvas } from "moe-widget";
+import { Live2DCanvas } from "moe2d";
 
 export function Mascot() {
   return (

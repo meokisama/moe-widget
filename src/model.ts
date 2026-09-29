@@ -162,7 +162,7 @@ export class Model extends CubismUserModel {
 
   async #read<T>(url: URL, signal: AbortSignal | undefined, body: (response: Response) => Promise<T>): Promise<T> {
     const response = await this.#fetch(url, signal ? { signal } : {});
-    if (!response.ok) throw new Error(`moe-widget: ${response.status} ${response.statusText} for ${url}`);
+    if (!response.ok) throw new Error(`moe2d: ${response.status} ${response.statusText} for ${url}`);
     const result = await body(response);
     this.#arrived?.();
     return result;
@@ -192,7 +192,7 @@ export class Model extends CubismUserModel {
     this.#setting = setting;
 
     const mocName = setting.getModelFileName();
-    if (!mocName) throw new Error(`moe-widget: ${url} names no .moc3 file`);
+    if (!mocName) throw new Error(`moe2d: ${url} names no .moc3 file`);
     this.#groups = Array.from({ length: setting.getMotionGroupCount() }, (_, i) => setting.getMotionGroupName(i));
 
     // Everything but the moc is optional, so fetch it all at once.
@@ -227,7 +227,7 @@ export class Model extends CubismUserModel {
 
     this.loadModel(moc, this._mocConsistency);
     if (!this._model) {
-      throw new Error(`moe-widget: ${mocName} is not a valid .moc3, or is newer than this Cubism Core supports`);
+      throw new Error(`moe2d: ${mocName} is not a valid .moc3, or is newer than this Cubism Core supports`);
     }
     // The layout owns placement, so model units go straight to the projection.
     this._modelMatrix.loadIdentity();
@@ -341,7 +341,7 @@ export class Model extends CubismUserModel {
     const webgl2 = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext;
     this.#textures = this.#images.map((image) => {
       const texture = gl.createTexture();
-      if (!texture) throw new Error("moe-widget: could not create a WebGL texture");
+      if (!texture) throw new Error("moe2d: could not create a WebGL texture");
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
       // WebGL 1 can only mipmap power-of-two textures.
@@ -463,9 +463,9 @@ export class Model extends CubismUserModel {
   async startMotion(name: string, options: MotionOptions = {}): Promise<boolean> {
     const group = this.#group(name);
     const count = group === undefined ? 0 : this.#setting.getMotionCount(group);
-    if (group === undefined || count === 0) throw new RangeError(`moe-widget: the model has no motion group "${name}"`);
+    if (group === undefined || count === 0) throw new RangeError(`moe2d: the model has no motion group "${name}"`);
     const index = options.index ?? this.#pick(group, count);
-    if (index < 0 || index >= count) throw new RangeError(`moe-widget: "${group}" has no motion ${index}`);
+    if (index < 0 || index >= count) throw new RangeError(`moe2d: "${group}" has no motion ${index}`);
     const priority = PRIORITY[options.priority ?? "normal"];
 
     const manager = this._motionManager;
@@ -512,7 +512,7 @@ export class Model extends CubismUserModel {
       return;
     }
     const motion = this.#expressions.get(name);
-    if (!motion) throw new RangeError(`moe-widget: the model has no expression "${name}"`);
+    if (!motion) throw new RangeError(`moe2d: the model has no expression "${name}"`);
     this._expressionManager.startMotion(motion, false);
   }
 

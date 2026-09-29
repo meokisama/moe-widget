@@ -1,6 +1,6 @@
 # Guide
 
-How to use `moe-widget`, case by case. Every prop, member and type named here has its exact definition in the [API](./api.md).
+How to use `moe2d`, case by case. Every prop, member and type named here has its exact definition in the [API](./api.md).
 
 The examples use Mao, one of the sample models in `playground/models`: motion groups `Idle` and `TapBody`, hit areas `Head` and `Body`, expressions `exp_01` to `exp_08`.
 
@@ -22,11 +22,11 @@ The examples use Mao, one of the sample models in `playground/models`: motion gr
 ## Showing a model
 
 ```sh
-npm install moe-widget
+npm install moe2d
 ```
 
 ```tsx
-import { Live2DCanvas } from "moe-widget";
+import { Live2DCanvas } from "moe2d";
 
 export function Mascot() {
   return (
@@ -115,7 +115,7 @@ const fromZip = async (url: URL) => {
 A server that wants a token:
 
 ```tsx
-import type { Fetch } from "moe-widget";
+import type { Fetch } from "moe2d";
 
 const withToken: Fetch = (url, init) =>
   fetch(url, { ...init, headers: { Authorization: `Bearer ${token}` } });
@@ -294,7 +294,7 @@ The `ref` is a [`Live2DCanvasHandle`](./api.md#live2dcanvashandle). It is `null`
 
 ```tsx
 import { useRef } from "react";
-import { Live2DCanvas, type Live2DCanvasHandle } from "moe-widget";
+import { Live2DCanvas, type Live2DCanvasHandle } from "moe2d";
 
 export function Mascot() {
   const live2d = useRef<Live2DCanvasHandle>(null);
@@ -522,7 +522,7 @@ The mouth stays at the value set until it is set again, so set it back to 0 at t
 
 ```tsx
 // app/page.tsx
-import { Live2DCanvas } from "moe-widget";
+import { Live2DCanvas } from "moe2d";
 
 export default function Page() {
   return (

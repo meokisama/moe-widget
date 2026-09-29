@@ -1,5 +1,5 @@
 import { unzipSync } from "fflate";
-import type { Fetch } from "moe-widget";
+import type { Fetch } from "moe2d";
 
 export type Source = { url: string; fetch?: Fetch };
 
