@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0
+
 ### Changed
 
 - `ModelInfo.parameters` lists each parameter as `{ id, min, max, default }` instead of its id.
