@@ -284,7 +284,14 @@ export class Model extends CubismUserModel {
     };
     this.info = {
       url: this.#base.href,
-      motions: Object.fromEntries(groups.map((group) => [group, setting.getMotionCount(group)])),
+      motions: Object.fromEntries(
+        groups.map((group) => [
+          group,
+          Array.from({ length: setting.getMotionCount(group) }, (_, i) =>
+            setting.getMotionFileName(group, i).replace(/^.*\//, "").replace(/\.motion3\.json$/i, ""),
+          ),
+        ]),
+      ),
       expressions: [...this.#expressions.keys()],
       hitAreas: Array.from({ length: setting.getHitAreasCount() }, (_, i) => setting.getHitAreaName(i)),
       parameters,

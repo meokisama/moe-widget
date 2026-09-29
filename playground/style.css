@@ -315,16 +315,6 @@ select {
   transform: scale(0.96);
 }
 
-.pill small {
-  min-width: 18px;
-  padding: 0 5px;
-  font-size: 11px;
-  text-align: center;
-  color: var(--muted);
-  background: var(--card);
-  border-radius: 999px;
-}
-
 .pill.accent {
   color: var(--accent-ink);
   background: var(--accent);

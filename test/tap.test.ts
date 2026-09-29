@@ -3,11 +3,15 @@ import type { Live2DCanvasHandle } from "../src/handle";
 import { reactToTap } from "../src/tap";
 
 // The groups and expressions of the playground's sample models.
-const MAO = { motions: { Idle: 2, TapBody: 6 }, expressions: ["exp_01", "exp_02"] };
-const ZUNDAMON = { motions: { Wave: 3, Laugh: 3, Point: 3, Think: 3 }, expressions: [] };
-const RORO = { motions: { Emotion: 5, Idle: 1, Note: 2, SectionClear: 1, Song: 4 }, expressions: [] };
+const motions = (count: number) => Array.from({ length: count }, (_, i) => `mtn_${i}`);
+const MAO = { motions: { Idle: motions(2), TapBody: motions(6) }, expressions: ["exp_01", "exp_02"] };
+const ZUNDAMON = { motions: { Wave: motions(3), Laugh: motions(3), Point: motions(3), Think: motions(3) }, expressions: [] };
+const RORO = {
+  motions: { Emotion: motions(5), Idle: motions(1), Note: motions(2), SectionClear: motions(1), Song: motions(4) },
+  expressions: [],
+};
 
-function fake(model: { motions: Record<string, number>; expressions: string[] }) {
+function fake(model: { motions: Record<string, string[]>; expressions: string[] }) {
   const live2d = { model, motion: vi.fn<Live2DCanvasHandle["motion"]>(async () => true), expression: vi.fn() };
   return live2d as typeof live2d & Live2DCanvasHandle;
 }

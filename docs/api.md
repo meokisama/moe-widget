@@ -57,7 +57,7 @@ The `ref`, `null` until a model has loaded. Coordinates are in the viewport, lik
 | Field                 |                                                     |
 | --------------------- | --------------------------------------------------- |
 | `url`                 | The resolved model3.json URL.                       |
-| `motions`             | Motion group names and how many motions each has.   |
+| `motions`             | Each motion group's motions in index order, named by file without its folder or `.motion3.json`. Labels only: play one by group and `index`. |
 | `expressions`         | Expression names.                                   |
 | `hitAreas`            | Hit area names.                                     |
 | `parameters`          | Parameter ids.                                      |

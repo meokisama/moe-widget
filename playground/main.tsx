@@ -210,9 +210,9 @@ function App() {
     setName(next);
   }
 
-  async function motion(group: string) {
-    const finished = await live2d.current?.motion(group, { priority: force ? "force" : "normal" });
-    log(`motion ${group} ${finished ? "finished" : "did not play"}`);
+  async function motion(group: string, index: number) {
+    const finished = await live2d.current?.motion(group, { index, priority: force ? "force" : "normal" });
+    log(`motion ${group}[${index}] ${finished ? "finished" : "did not play"}`);
   }
 
   async function listen() {
@@ -312,14 +312,17 @@ function App() {
             </label>
           }
         >
-          <div className="buttons">
-            {Object.entries(info?.motions ?? {}).map(([group, count]) => (
-              <button key={group} className="pill" onClick={() => void motion(group)}>
-                {group}
-                <small>{count}</small>
-              </button>
-            ))}
-          </div>
+          {Object.entries(info?.motions ?? {}).map(([group, names]) => (
+            <Row key={group} label={group} value={String(names.length)}>
+              <div className="buttons">
+                {names.map((name, index) => (
+                  <button key={index} className="pill" onClick={() => void motion(group, index)}>
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </Row>
+          ))}
           <Row label="Idle">
             <select value={idle} onChange={(event) => setIdle(event.target.value)}>
               <option value={DEFAULT}>Default</option>
@@ -351,9 +354,6 @@ function App() {
                   {expression}
                 </button>
               ))}
-              <button className="pill accent" onClick={() => live2d.current?.expression()}>
-                Random
-              </button>
               <button className="pill ghost" onClick={() => live2d.current?.expression(null)}>
                 Clear
               </button>

@@ -73,8 +73,11 @@ export type MotionOptions = {
 
 export type ModelInfo = {
   url: string;
-  /** Motion group names and how many motions each has. */
-  motions: Readonly<Record<string, number>>;
+  /**
+   * Each motion group's motions in index order, named by file without its folder or
+   * `.motion3.json`. Motions have no names of their own, so these are labels, not keys.
+   */
+  motions: Readonly<Record<string, readonly string[]>>;
   expressions: readonly string[];
   hitAreas: readonly string[];
   parameters: readonly string[];
