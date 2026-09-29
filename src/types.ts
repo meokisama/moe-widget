@@ -61,8 +61,6 @@ export type LoadOptions = {
   /** Abandons the load. The promise rejects with an `AbortError`. */
   signal?: AbortSignal;
   fetch?: Fetch | undefined;
-  /** Replaces the layout for this model. */
-  layout?: Layout;
   /**
    * Parameters the lip sync opens, when the model does not list any in its
    * LipSync group. By default `ParamMouthOpenY`, if the model has it.
@@ -86,7 +84,7 @@ export type ModelInfo = {
   motions: Readonly<Record<string, readonly string[]>>;
   expressions: readonly string[];
   hitAreas: readonly string[];
-  parameters: readonly string[];
+  parameters: readonly { id: string; min: number; max: number; default: number }[];
   /** The model's canvas in its own pixels. */
   width: number;
   height: number;

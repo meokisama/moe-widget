@@ -52,6 +52,8 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
   const canvas = useRef<HTMLCanvasElement>(null);
   const [live2d, setLive2D] = useState<Live2D | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // The URL of the model on screen, so a layout passed with a new model waits for it.
+  const shown = useRef<string | null>(null);
   // The latest handlers, so passing inline functions does not resubscribe every render.
   const handlers = useRef(props);
   handlers.current = props;
@@ -86,6 +88,7 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
     return () => {
       cancelled = true;
       instance?.destroy();
+      shown.current = null;
       setLive2D(null);
       setLoaded(false);
     };
@@ -106,15 +109,18 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
 
   const layoutKey = JSON.stringify(layout ?? {});
   useEffect(() => {
-    if (live2d) live2d.layout = JSON.parse(layoutKey) as Layout;
+    if (live2d && shown.current === model) live2d.layout = JSON.parse(layoutKey) as Layout;
   }, [live2d, layoutKey]);
 
   useEffect(() => {
     if (!live2d) return;
     const controller = new AbortController();
     const { fetch } = handlers.current;
-    live2d.load(model, { signal: controller.signal, fetch, layout: JSON.parse(layoutKey) as Layout }).then(
+    live2d.load(model, { signal: controller.signal, fetch }).then(
       (info) => {
+        // Runs before the next frame, so the new model is never drawn with the old layout.
+        shown.current = model;
+        live2d.layout = handlers.current.layout ?? {};
         setLoaded(true);
         handlers.current.onLoad?.(info, handleOf(live2d));
       },
@@ -123,7 +129,6 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
       },
     );
     return () => controller.abort();
-    // The layout is applied by the effect above; it must not reload the model.
   }, [live2d, model]);
 
   return <canvas ref={canvas} className={className} style={style ? { ...FILL, ...style } : FILL} />;

@@ -219,7 +219,6 @@ export class Live2D extends Emitter<Live2DEvents> {
       }
       this.#model?.release();
       this.#model = model;
-      if (options.layout) this.#layout = options.layout;
       this.#placement = null;
       // display: none leaves no client rects, and is a deliberate way to hide the canvas.
       if (this.canvas.getClientRects().length > 0 && (!this.canvas.clientWidth || !this.canvas.clientHeight)) {

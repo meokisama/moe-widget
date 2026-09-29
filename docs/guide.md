@@ -282,7 +282,7 @@ onLoad={(model) => {
   model.motions;     // { Idle: ["mtn_01", "sample_01"], TapBody: ["mtn_02", "mtn_03", …] }
   model.expressions; // ["exp_01", …]
   model.hitAreas;    // ["Head", "Body"]
-  model.parameters;  // ["ParamAngleX", "ParamCheek", …]
+  model.parameters;  // [{ id: "ParamAngleX", min: -30, max: 30, default: 0 }, …]
 }}
 ```
 
@@ -373,7 +373,12 @@ live2d.setParameter("ParamCheek", 1);    // blush
 live2d.setParameter("ParamCheek", null); // let the motions drive it again
 ```
 
-Each parameter has its own range, set by the author. Many go from 0 to 1, angles often from -30 to 30. A value outside the range is clamped. An id the model does not have does nothing.
+Each parameter has its own range, set by the author: `model.parameters` gives it. A value outside the range is clamped. An id the model does not have does nothing.
+
+```tsx
+const turn = live2d.model.parameters.find((parameter) => parameter.id === "ParamAngleX");
+if (turn) live2d.setParameter(turn.id, turn.max); // as far as this model turns its head
+```
 
 ### Where the model looks
 

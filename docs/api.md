@@ -65,7 +65,7 @@ The `ref`, `null` until a model has loaded. Coordinates are in the viewport, lik
 | `motions`             | Each motion group's motions in index order, named by file without its folder or `.motion3.json`. Labels only: play one by group and `index`. |
 | `expressions`         | Expression names.                                   |
 | `hitAreas`            | Hit area names.                                     |
-| `parameters`          | Parameter ids.                                      |
+| `parameters`          | Each parameter as `{ id, min, max, default }`, the range `setParameter` clamps to and the value it rests at. |
 | `width`, `height`     | The model's canvas in its own pixels.               |
 
 ### `TapEvent`

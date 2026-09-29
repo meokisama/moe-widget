@@ -279,15 +279,18 @@ export class Model extends CubismUserModel {
     ]);
     this.#scheduler.addUpdatableList(new CubismLookUpdater(this.#look, this._dragManager));
 
-    const parameters = Array.from({ length: this._model.getParameterCount() }, (_, i) =>
-      this._model.getParameterId(i).getString(),
-    );
+    const parameters = Array.from({ length: this._model.getParameterCount() }, (_, i) => ({
+      id: this._model.getParameterId(i).getString(),
+      min: this._model.getParameterMinimumValue(i),
+      max: this._model.getParameterMaximumValue(i),
+      default: this._model.getParameterDefaultValue(i),
+    }));
     for (let i = 0; i < setting.getLipSyncParameterCount(); i++) {
       this.#lipSyncIds.push(setting.getLipSyncParameterId(i));
     }
     if (this.#lipSyncIds.length === 0) {
       const fallback = setup.mouth ?? ["ParamMouthOpenY"];
-      this.#lipSyncIds = fallback.filter((name) => parameters.includes(name)).map(id);
+      this.#lipSyncIds = fallback.filter((name) => parameters.some((parameter) => parameter.id === name)).map(id);
     }
     if (this.#lipSyncIds.length > 0) {
       this.#scheduler.addUpdatableList(

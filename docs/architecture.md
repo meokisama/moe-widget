@@ -36,7 +36,7 @@ The Framework is a global. `acquire` and `release` in `model.ts` count its users
 | ---------------------- | --------------------------------------------------------- |
 | `pixelRatio`, `debug`  | Destroys the `Live2D` instance and creates a new one.     |
 | `model`                | `live2d.load(url)` with the current `fetch`, aborted when the URL changes again or the component unmounts. |
-| `layout`               | Sets `live2d.layout`, compared by JSON so an inline object does not re-run it. |
+| `layout`               | Sets `live2d.layout`, compared by JSON so an inline object does not re-run it. While a new `model` loads it waits, and the load applies the latest one as it swaps the model in. |
 | `follow`, `idle`, `volume` | Set on the instance in place.                          |
 
 Callbacks are read from a ref at call time, so inline functions never resubscribe.
