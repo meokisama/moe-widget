@@ -1,0 +1,52 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "zundamon.moc3",
+		"Textures": [
+			"zundamon.2048/texture_00.png"
+		],
+		"Physics": "zundamon.physics3.json",
+		"DisplayInfo": "zundamon.cdi3.json",
+		"Motions": {
+			"Wave": [
+				{ "File": "motions/mtnBody_wave.motion3.json" },
+				{ "File": "motions/mtnBody_wave2.motion3.json" },
+				{ "File": "motions/mtnBody_wave3.motion3.json" },
+				{ "File": "motions/mtnBody_yes.motion3.json" }
+			],
+			"Laugh": [
+				{ "File": "motions/mtnBody_laugh.motion3.json" },
+				{ "File": "motions/mtnBody_laugh2.motion3.json" },
+				{ "File": "motions/mtnBody_laugh3.motion3.json" }
+			],
+			"Point": [
+				{ "File": "motions/mtnBody_point.motion3.json" },
+				{ "File": "motions/mtnBody_point2.motion3.json" },
+				{ "File": "motions/mtnBody_point3.motion3.json" }
+			],
+			"Think": [
+				{ "File": "motions/mtnBody_think.motion3.json" },
+				{ "File": "motions/mtnBody_think2.motion3.json" },
+				{ "File": "motions/mtnBody_think3.motion3.json" }
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		}
+	],
+	"HitAreas": []
+}

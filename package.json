@@ -1,0 +1,66 @@
+{
+  "name": "moe-widget",
+  "version": "0.1.0",
+  "description": "Live2D Cubism models on the web, with React bindings.",
+  "keywords": [
+    "live2d",
+    "cubism",
+    "webgl",
+    "react",
+    "vtuber",
+    "widget"
+  ],
+  "license": "MIT",
+  "author": "Meoki",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "NOTICE.md"
+  ],
+  "scripts": {
+    "dev": "vite playground",
+    "build:playground": "vite build playground",
+    "build": "tsdown",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "sync-cubism": "node scripts/sync-cubism.mjs",
+    "changeset": "changeset",
+    "release": "npm run check && npm test && npm run build && changeset publish"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7",
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.3.0",
+    "fflate": "^0.8.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "tsdown": "^0.15.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
