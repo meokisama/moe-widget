@@ -38,6 +38,7 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "sync-cubism": "node scripts/sync-cubism.mjs",
+    "collection": "node scripts/collection.mjs",
     "preversion": "npm run check && npm test && npm run build",
     "version": "node scripts/changelog.mjs release && git add CHANGELOG.md",
     "release:patch": "npm version patch -m \"chore: release %s\" && git push --follow-tags",

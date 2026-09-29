@@ -83,8 +83,8 @@ Each patch must match exactly once, so an SDK update that moves the code fails l
 
 ```sh
 npm install
-npm run dev              # playground at http://localhost:5173 with sample models
-npm run build:playground # static build of the playground in playground/dist
+npm run dev              # playground at http://localhost:5173
+npm run build:playground # static build of the playground in playground/dist, needs VITE_COLLECTION
 npm run check            # types
 npm test
 npm run build
@@ -93,6 +93,17 @@ npm run build
 Tests run in Vitest without WebGL, so they cover the pure parts: `layout`, `emitter`, `handle`, `tap`, and the types.
 
 Every push to `master` runs `ci.yml` and deploys the playground to GitHub Pages (`playground.yml`).
+
+### Playground collection
+
+The models are not in the repository. They live on R2, mirrored locally in `playground/models` (gitignored), which is the folder to sync.
+
+The playground lists the models of a `collection.json`: an array of `{ name, model, preview? }`, paths relative to the file. `npm run dev` always serves `playground/models/collection.json`. A build loads the URL in `VITE_COLLECTION` (`playground/.env.local`, or the repository variable `COLLECTION_URL` on Pages) and fails without it. The bucket needs CORS, as in the [guide](guide.md).
+
+- `npm run collection` rewrites `playground/models/collection.json` from every `.model3.json` under it, named after its folder (`jane-doe` or `jane_doe` becomes `Jane Doe`), with a `preview.png`, `.jpg` or `.webp` beside it as its preview. It fixes a model made for VTube Studio in place, as the zip import does.
+- The fix is `playground/complete.ts`, what it does is in the [guide](guide.md#models-made-for-vtube-studio). It reads the `.vtube.json` for the hotkey names and the idle motion, and the `.cdi3.json` for the ids the model has. Running it again changes nothing.
+- The zip import (`playground/zip.ts`) first picks the code page of the file names, which zips do not record: of UTF-8, GBK, Shift-JIS, Big5 and EUC-KR, the one under which the `.model3.json` finds the most of its moc3 and textures.
+- In dev only, the collection's "Capture previews" button loads each model without one (or every model), crops the upper half of it (head to waist) to a 360 × 480 PNG and downloads `previews.zip`, laid out as `<folder>/preview.png` to unzip into `playground/models`.
 
 ### Releasing
 

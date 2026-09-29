@@ -15,7 +15,10 @@
   --accent: #f06aad;
   --accent-ink: #ffffff;
   --shadow: 0 1px 2px rgb(75 42 138 / 0.06), 0 6px 20px rgb(75 42 138 / 0.06);
-  font: 14px/1.5 "Nunito", system-ui, sans-serif;
+  font:
+    14px/1.5 "Nunito",
+    system-ui,
+    sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -438,11 +441,108 @@ input:focus-visible {
   margin: 0;
   padding: 10px 12px;
   overflow: auto;
-  font: 11.5px/1.6 ui-monospace, "Cascadia Code", Consolas, monospace;
+  font:
+    11.5px/1.6 ui-monospace,
+    "Cascadia Code",
+    Consolas,
+    monospace;
   white-space: pre-wrap;
   color: var(--muted);
   background: var(--control);
   border-radius: 12px;
+}
+
+/* Collection */
+
+.gallery {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 32px;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.gallery-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.gallery-bar input {
+  flex: 1;
+  min-width: 180px;
+  padding: 7px 14px;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  background: var(--control);
+  border: 0;
+  border-radius: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 8px 12px;
+  text-align: center;
+  background: var(--card);
+  border: 2px solid var(--rule);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
+}
+
+.tile:hover {
+  border-color: var(--lavender);
+}
+
+.tile:active {
+  transform: scale(0.98);
+}
+
+.tile[aria-current="true"] {
+  border-color: var(--accent);
+}
+
+.tile img,
+.tile .placeholder {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  margin-bottom: 8px;
+  object-fit: contain;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--pink) 16%, transparent), transparent 70%), var(--control);
+  border-radius: 10px;
+}
+
+.tile .placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--lavender);
+}
+
+.tile strong {
+  padding: 0 4px;
+  font-size: 14px;
 }
 
 @media (max-width: 760px) {

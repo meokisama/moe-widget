@@ -1,20 +1,20 @@
 import { type CSSProperties, type ReactNode, type RefObject, StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type LoadProgress, type ModelInfo } from "moe2d";
-import { type Source, sourceFromZip } from "./zip";
-
-// Relative, so the build works under any path, such as GitHub Pages' /moe2d/.
-const MODELS = {
-  Mao: "./mao/Mao.model3.json",
-  Zundamon: "./zundamon/zundamon.model3.json",
-  Roro: "./roro/roro.model3.json",
-};
+import { zipSync } from "fflate";
+import { type Model, loadCollection } from "./collection";
+import { Gallery } from "./gallery";
+import { snapshot } from "./preview";
+import { type Source, type Upload, sourceFromZip } from "./zip";
 
 type Follow = NonNullable<Live2DCanvasProps["follow"]>;
 
 // The idle select's values for leaving the prop out and for false; any other value is a group.
 const DEFAULT = "";
 const OFF = "(off)";
+
+// The model shown on open, when the collection has it.
+const FIRST = "Zundamon";
 
 const LOGO = new URL("./logo.png", import.meta.url).href;
 
@@ -171,17 +171,45 @@ function Range(props: { min: number; max: number; step: number; value: number; o
   );
 }
 
-function keysOf<T extends object>(object: T): Array<keyof T & string> {
-  return Object.keys(object) as Array<keyof T & string>;
+function save(blob: Blob, file: string) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = file;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
+/** Whether the collection is open, kept in the hash so Back closes it. */
+function useBrowsing(): [boolean, (open: boolean) => void] {
+  const [browsing, setBrowsing] = useState(location.hash === "#collection");
+  useEffect(() => {
+    const change = () => setBrowsing(location.hash === "#collection");
+    window.addEventListener("popstate", change);
+    return () => window.removeEventListener("popstate", change);
+  }, []);
+  const set = (open: boolean) => {
+    if (open === (location.hash === "#collection")) return;
+    // Back only undoes an entry this page pushed: a page opened at #collection would leave the site.
+    if (open) history.pushState({ collection: true }, "", "#collection");
+    else if (history.state?.collection) history.back();
+    else history.replaceState(null, "", location.pathname + location.search);
+    setBrowsing(open);
+  };
+  return [browsing, set];
 }
 
 function App() {
   const live2d = useRef<Live2DCanvasHandle>(null);
   // Changing the key remounts the canvas: the React way to destroy and recreate.
   const [instance, setInstance] = useState(0);
-  const [name, setName] = useState("Mao");
+  const [entries, setEntries] = useState<Model[]>([]);
+  const [name, setName] = useState("");
+  const [browsing, setBrowsing] = useBrowsing();
+  const [capturing, setCapturing] = useState<string | null>(null);
+  // Resolves the capture's wait for a model: true once it loads, false if it fails.
+  const settle = useRef<((loaded: boolean) => void) | null>(null);
   // Keyed by file name, whose ".zip" keeps it apart from the sample models.
-  const [uploads, setUploads] = useState<Record<string, Source>>({});
+  const [uploads, setUploads] = useState<Record<string, Upload>>({});
   const upload = useRef<HTMLInputElement>(null);
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [loadMs, setLoadMs] = useState<number | null>(null);
@@ -196,6 +224,17 @@ function App() {
   const [idle, setIdle] = useState(DEFAULT);
   const [follow, setFollow] = useState<Follow>("window");
   const started = useRef(performance.now());
+
+  useEffect(() => {
+    loadCollection().then(
+      (loaded) => {
+        started.current = performance.now();
+        setEntries(loaded);
+        setName((current) => current || (loaded.find((entry) => entry.name === FIRST) ?? loaded[0])?.name || "");
+      },
+      (failure) => setError(`collection: ${failure}`),
+    );
+  }, []);
 
   const log = (message: string) =>
     setLines((previous) => [`${new Date().toLocaleTimeString()}  ${message}`, ...previous].slice(0, 60));
@@ -220,13 +259,42 @@ function App() {
       const source = await sourceFromZip(file);
       setUploads((previous) => ({ ...previous, [file.name]: source }));
       choose(file.name);
-      log(`opened ${file.name}`);
+      log(`opened ${file.name}${source.changes.length > 0 ? `: ${source.changes.join(", ")}` : ""}`);
     } catch (failure) {
       setError(String(failure));
     }
   }
 
-  const source = uploads[name] ?? { url: MODELS[name as keyof typeof MODELS] };
+  const entry = entries.find((entry) => entry.name === name);
+  const source: Source | undefined = uploads[name] ?? (entry && { url: entry.model });
+
+  async function capture(models: Model[]) {
+    setBrowsing(false);
+    setView(HOME);
+    const files: Record<string, Uint8Array> = {};
+    for (const [index, model] of models.entries()) {
+      setCapturing(`${index + 1} / ${models.length}`);
+      const loaded = new Promise<boolean>((resolve) => (settle.current = resolve));
+      // Remounting loads the model even when it is already on screen.
+      choose(model.name);
+      setInstance((key) => key + 1);
+      if (!(await loaded)) continue;
+      // Lets the idle motion and physics settle out of the load pose.
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try {
+        const png = await snapshot(live2d.current!.canvas);
+        files[model.folder ? `${model.folder}/preview.png` : "preview.png"] = new Uint8Array(await png.arrayBuffer());
+      } catch (failure) {
+        log(`preview of ${model.name}: ${failure}`);
+      }
+    }
+    settle.current = null;
+    setCapturing(null);
+    const count = Object.keys(files).length;
+    log(`captured ${count} of ${models.length} previews`);
+    if (count === 0) return;
+    save(new Blob([zipSync(files, { level: 0 })], { type: "application/zip" }), "previews.zip");
+  }
 
   async function motion(group: string, index: number) {
     const finished = await live2d.current?.motion(group, { index, priority: force ? "force" : "normal" });
@@ -257,35 +325,42 @@ function App() {
           if (file) void open(file);
         }}
       >
-        <Live2DCanvas
-          key={instance}
-          ref={live2d}
-          model={source.url}
-          fetch={source.fetch}
-          layout={layout}
-          idle={idle === DEFAULT ? undefined : idle === OFF ? false : idle}
-          follow={follow}
-          volume={volume}
-          onProgress={(next) => {
-            setProgress(next);
-            if (next.loaded === next.total) log(`fetched ${next.total} files`);
-          }}
-          onLoad={(loaded, current) => {
-            current.mouth = mouth;
-            setInfo(loaded);
-            setLoadMs(Math.round(performance.now() - started.current));
-          }}
-          onError={(failure) => setError(String(failure))}
-          onMotionStart={({ group, index }) => log(`start ${group}[${index}]`)}
-          onMotionEnd={({ group, index }) => log(`end ${group}[${index}]`)}
-        />
+        {source && (
+          <Live2DCanvas
+            key={instance}
+            ref={live2d}
+            model={source.url}
+            fetch={source.fetch}
+            layout={layout}
+            idle={idle === DEFAULT ? undefined : idle === OFF ? false : idle}
+            follow={follow}
+            volume={volume}
+            onProgress={(next) => {
+              setProgress(next);
+              if (next.loaded === next.total) log(`fetched ${next.total} files`);
+            }}
+            onLoad={(loaded, current) => {
+              settle.current?.(true);
+              current.mouth = mouth;
+              setInfo(loaded);
+              setLoadMs(Math.round(performance.now() - started.current));
+            }}
+            onError={(failure) => {
+              settle.current?.(false);
+              setError(String(failure));
+            }}
+            onMotionStart={({ group, index }) => log(`start ${group}[${index}]`)}
+            onMotionEnd={({ group, index }) => log(`end ${group}[${index}]`)}
+          />
+        )}
 
         <div className="overlay top">
           <h1>{name}</h1>
           <div className="chips">
+            {capturing && <span className="chip">Capturing previews {capturing}</span>}
             {error ? (
               <span className="chip error">{error}</span>
-            ) : loadMs === null ? (
+            ) : !source ? null : loadMs === null ? (
               <span className="chip">Loading… {progress && `${progress.loaded} / ${progress.total} files`}</span>
             ) : (
               info && (
@@ -311,7 +386,7 @@ function App() {
         <Card title="Model">
           <div className="picker">
             <select aria-label="Model" value={name} onChange={(event) => choose(event.target.value)}>
-              {[...keysOf(MODELS), ...Object.keys(uploads)].map((model) => (
+              {[...entries.map((entry) => entry.name), ...Object.keys(uploads)].map((model) => (
                 <option key={model}>{model}</option>
               ))}
             </select>
@@ -327,6 +402,17 @@ function App() {
               </svg>
             </button>
           </div>
+          <button className="pill" onClick={() => setBrowsing(true)}>
+            Browse the collection ({entries.length})
+          </button>
+          {uploads[name] && uploads[name].changes.length > 0 && (
+            <>
+              <p className="empty">Fixed on import: {uploads[name].changes.join(", ")}.</p>
+              <button className="pill" onClick={() => save(uploads[name]!.normalized(), name.replace(/\.zip$/i, ".fixed.zip"))}>
+                Download the fixed zip
+              </button>
+            </>
+          )}
           <input
             ref={upload}
             type="file"
@@ -462,7 +548,8 @@ function App() {
               className="pill"
               onClick={() => {
                 // Ten model changes in a row: each aborts the last, and only the final one lands.
-                const names = keysOf(MODELS);
+                const names = entries.map((entry) => entry.name);
+                if (names.length === 0) return;
                 for (let i = 0; i < 10; i++) setTimeout(() => choose(names[i % names.length]!), i * 30);
                 log("swapped 10× fast");
               }}
@@ -483,6 +570,19 @@ function App() {
           <pre className="log">{lines.length > 0 ? lines.join("\n") : "Nothing yet."}</pre>
         </Card>
       </aside>
+
+      {browsing && (
+        <Gallery
+          entries={entries}
+          current={name}
+          onPick={(picked) => {
+            if (picked.name !== name) choose(picked.name);
+            setBrowsing(false);
+          }}
+          onClose={() => setBrowsing(false)}
+          onCapture={import.meta.env.DEV ? (models) => void capture(models) : undefined}
+        />
+      )}
     </main>
   );
 }

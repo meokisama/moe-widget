@@ -2,7 +2,7 @@
 
 How to use `moe2d`, case by case. Every prop, member and type named here has its exact definition in the [API](./api.md).
 
-The examples use Mao, one of the sample models in `playground/models`: motion groups `Idle` and `TapBody`, hit areas `Head` and `Body`, expressions `exp_01` to `exp_08`.
+The examples use Mao, one of [Live2D's sample models](https://www.live2d.com/en/learn/sample/): motion groups `Idle` and `TapBody`, hit areas `Head` and `Body`, expressions `exp_01` to `exp_08`.
 
 ## Contents
 
@@ -81,6 +81,39 @@ The other site must allow your page to read its files, by answering with an `Acc
 Cubism 3 and later: a `.model3.json` that names a `.moc3`. This covers models made with any recent Cubism Editor, up to Cubism 5.
 
 Cubism 2 models do not load. They have a `model.json` (no `3`), a `.moc` and `.mtn` motions. Loading one fails with `names no .moc3 file`.
+
+### Models made for VTube Studio
+
+They load, but their `.model3.json` leaves out what VTube Studio keeps in its own `.vtube.json` or drives from face tracking. Fill it in once, in the file you serve.
+
+The playground does it: open the model's zip with the folder button beside the model picker, check that it blinks and has its expressions, then press "Download the fixed zip". The button shows only when something was fixed, with what. Nothing leaves the browser. The fixed zip holds every file of the original, and:
+
+- names its files in UTF-8, where a Chinese or Japanese Windows zipped them under its own code page, which other unzippers garble;
+- lists in the `.model3.json` every `.exp3.json` and `.motion3.json` in its folder it left out: an expression under its hotkey's name, or its file name without one; the idle motion in `Idle`, the others in `Other`;
+- fills an empty `EyeBlink` or `LipSync` group with the ids below, those the model has.
+
+What the `.model3.json` already lists stays as it is.
+
+By hand, add:
+
+```json
+{
+  "FileReferences": {
+    "Expressions": [{ "Name": "blush", "File": "blush.exp3.json" }],
+    "Motions": { "Idle": [{ "File": "Scene1.motion3.json" }], "Other": [{ "File": "wave.motion3.json" }] }
+  },
+  "Groups": [
+    { "Target": "Parameter", "Name": "EyeBlink", "Ids": ["ParamEyeLOpen", "ParamEyeROpen"] },
+    { "Target": "Parameter", "Name": "LipSync", "Ids": ["ParamMouthOpenY"] }
+  ]
+}
+```
+
+- `Expressions`: every `.exp3.json` beside the model. Their names are on the `ToggleExpression` hotkeys of `.vtube.json`.
+- `Motions`: the file `.vtube.json` names as `IdleAnimation` goes in `Idle`, which plays on its own. Group the rest as you like.
+- `Groups`: without `EyeBlink` ids the model never blinks. Use the ids the model has, listed in its `.cdi3.json`.
+
+VTube Studio stacks expressions (a face and a hand pose at once). [`expression`](./api.md) keeps one at a time.
 
 ### Serving the files yourself
 
@@ -564,3 +597,4 @@ Changing `pixelRatio` or `debug` restarts the canvas and reloads the model, so s
 | No sound                                  | No user gesture yet on the page, or `volume` is 0.                                        |
 | The mouth does not move                   | The model has no `LipSync` group and no `ParamMouthOpenY`, or an element you passed plays a file from another site without CORS. |
 | Cubism 2 model (`model.json`, `.moc`)     | Not supported. Use a Cubism 3 or later model.                                             |
+| No expressions or motions, eyes never blink | A model made for VTube Studio. See [Models made for VTube Studio](#models-made-for-vtube-studio). |
