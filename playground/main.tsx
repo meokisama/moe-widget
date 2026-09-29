@@ -10,15 +10,6 @@ const MODELS = {
 
 type ModelName = keyof typeof MODELS;
 
-/** A head tap changes the expression, any other tap plays the model's tap motion. */
-function reactToTap(live2d: Live2DCanvasHandle, hitAreas: string[]): void {
-  const info = live2d.model;
-  if (!info) return;
-  const tap = Object.keys(info.motions).find((group) => /tap/i.test(group));
-  if (hitAreas.includes("Head") && info.expressions.length > 0) live2d.expression();
-  else if (tap) void live2d.motion(tap);
-}
-
 const FRAMES = {
   "Whole canvas": [0, 0, 1, 1],
   "Upper 60%": [0, 0, 1, 0.6],
@@ -84,22 +75,17 @@ function App() {
           ref={live2d}
           model={MODELS[name]}
           layout={layout}
-          onReady={(created) => {
-            created.mouth = mouth;
-            if (paused) created.pause();
-          }}
-          onLoad={(loaded) => {
+          paused={paused}
+          onLoad={(loaded, current) => {
+            current.mouth = mouth;
             setInfo(loaded);
             setStatus(
               `${name}: ${loaded.width}×${loaded.height}px, ${loaded.parameters.length} parameters, loaded in ${Math.round(performance.now() - started.current)}ms`,
             );
           }}
           onError={(error) => setStatus(`Failed: ${String(error)}`)}
-          onTap={({ hitAreas, x, y }, current) => {
-            log(`tap ${Math.round(x)},${Math.round(y)} [${hitAreas.join(", ") || "no hit area"}]`);
-            reactToTap(current, hitAreas);
-          }}
           onMotionStart={({ group, index }) => log(`start ${group}[${index}]`)}
+          onMotionEnd={({ group, index }) => log(`end ${group}[${index}]`)}
         />
         <p className="status">{status}</p>
       </section>
@@ -213,15 +199,7 @@ function App() {
         <fieldset>
           <legend>Instance</legend>
           <div className="buttons">
-            <button
-              onClick={() => {
-                const current = live2d.current;
-                if (!current) return;
-                if (current.paused) current.resume();
-                else current.pause();
-                setPaused(current.paused);
-              }}
-            >
+            <button onClick={() => setPaused((value) => !value)}>
               {paused ? "Resume" : "Pause"}
             </button>
             <button

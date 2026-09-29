@@ -65,7 +65,6 @@ export class Live2D extends Emitter<Live2DEvents> {
   #size = { width: 0, height: 0 };
   #frame = 0;
   #last = 0;
-  #paused = false;
   #visible = true;
   #lost = false;
   #destroyed = false;
@@ -121,9 +120,8 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#mouth.manual = Math.max(0, Math.min(1, value));
   }
 
-  get paused(): boolean {
-    return this.#paused;
-  }
+  /** Stops the animation while true. */
+  paused = false;
 
   /**
    * Loads a model3.json and swaps it in once everything is ready; the previous
@@ -162,6 +160,10 @@ export class Live2D extends Emitter<Live2DEvents> {
       this.#model = model;
       if (options.layout) this.#layout = options.layout;
       this.#placement = null;
+      // display: none leaves no client rects, and is a deliberate way to hide the canvas.
+      if (this.canvas.getClientRects().length > 0 && (!this.canvas.clientWidth || !this.canvas.clientHeight)) {
+        console.warn("moe-widget: the canvas has no width or height, so nothing shows. Give its parent a size.");
+      }
       this.emit("load", model.info);
       return model.info;
     } catch (error) {
@@ -218,14 +220,6 @@ export class Live2D extends Emitter<Live2DEvents> {
 
   hush(): void {
     this.#mouth.stop();
-  }
-
-  pause(): void {
-    this.#paused = true;
-  }
-
-  resume(): void {
-    this.#paused = false;
   }
 
   /**
@@ -359,7 +353,7 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#last = now;
 
     const model = this.#model;
-    if (this.#paused || !this.#visible || this.#lost || !model || this.#gl.isContextLost()) return;
+    if (this.paused || !this.#visible || this.#lost || !model || this.#gl.isContextLost()) return;
 
     const gl = this.#gl;
     const { width, height } = this.canvas;

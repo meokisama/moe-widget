@@ -3,16 +3,16 @@ import type { Voice } from "./mouth";
 import type { ModelInfo, MotionOptions } from "./types";
 
 /**
- * What `Live2DCanvas` gives its ref and callbacks. Loading, layout and teardown
- * follow the component's props and lifetime, so they are not part of it.
+ * What `Live2DCanvas` gives its ref and callbacks, once a model has loaded.
+ * Loading, layout, pausing and teardown follow the component's props and
+ * lifetime, so they are not part of it.
  */
 export type Live2DCanvasHandle = {
   readonly canvas: HTMLCanvasElement;
-  /** The loaded model, or null before the first load completes. */
-  readonly model: ModelInfo | null;
+  /** The model on screen. During a model change it is the old one until the new one loads. */
+  readonly model: ModelInfo;
   /** How open the mouth is, 0 to 1, on top of any voice playing. */
   mouth: number;
-  readonly paused: boolean;
   /**
    * Plays a motion from a group. Resolves true when it finishes, or false if a
    * motion of equal or higher priority kept it from starting, or it was cut off.
@@ -33,9 +33,6 @@ export type Live2DCanvasHandle = {
   speak(voice: Voice, options?: { signal?: AbortSignal }): Promise<void>;
   /** Stops the voice started by `speak`. */
   hush(): void;
-  /** Stops the animation until `resume`. */
-  pause(): void;
-  resume(): void;
 };
 
 const handles = new WeakMap<Live2D, Live2DCanvasHandle>();
@@ -47,16 +44,13 @@ export function handleOf(live2d: Live2D): Live2DCanvasHandle {
     handle = Object.freeze({
       canvas: live2d.canvas,
       get model() {
-        return live2d.model;
+        return live2d.model!;
       },
       get mouth() {
         return live2d.mouth;
       },
       set mouth(value: number) {
         live2d.mouth = value;
-      },
-      get paused() {
-        return live2d.paused;
       },
       motion: (group, options) => live2d.motion(group, options),
       expression: (name) => live2d.expression(name),
@@ -65,8 +59,6 @@ export function handleOf(live2d: Live2D): Live2DCanvasHandle {
       lookAt: (clientX, clientY) => live2d.lookAt(clientX, clientY),
       speak: (voice, options) => live2d.speak(voice, options),
       hush: () => live2d.hush(),
-      pause: () => live2d.pause(),
-      resume: () => live2d.resume(),
     } satisfies Live2DCanvasHandle);
     handles.set(live2d, handle);
   }

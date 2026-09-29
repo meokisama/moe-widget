@@ -12,12 +12,17 @@ export type { Layout, ModelInfo, MotionEvent, MotionOptions, Priority, TapEvent 
 export type Live2DCanvasProps = Live2DOptions & {
   /** URL of the model3.json. Changing it loads the new model over the old one. */
   model: string;
+  /** Stops the animation while true. @default false */
+  paused?: boolean;
   className?: string;
   style?: CSSProperties;
-  /** Called when the canvas is ready, before the first model loads. */
-  onReady?: (live2d: Live2DCanvasHandle) => void;
   onLoad?: (model: ModelInfo, live2d: Live2DCanvasHandle) => void;
   onError?: (error: unknown) => void;
+  /**
+   * Replaces the default reaction to a tap: a random expression on a hit area
+   * named like "head", otherwise a motion from a group named like "tap", or
+   * from any group but the idle one.
+   */
   onTap?: (event: TapEvent, live2d: Live2DCanvasHandle) => void;
   onMotionStart?: (event: MotionEvent) => void;
   onMotionEnd?: (event: MotionEvent) => void;
@@ -31,19 +36,28 @@ function isAbort(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+function reactToTap(live2d: Live2DCanvasHandle, hitAreas: string[], idle: string | false | undefined): void {
+  const { expressions, motions } = live2d.model;
+  if (expressions.length > 0 && hitAreas.some((area) => /head/i.test(area))) return live2d.expression();
+  const groups = Object.keys(motions).filter((group) => (idle === undefined ? !/^idle$/i.test(group) : group !== idle));
+  const group = groups.find((name) => /tap/i.test(name)) ?? groups[Math.floor(Math.random() * groups.length)];
+  if (group) void live2d.motion(group);
+}
+
 /**
  * A canvas showing a Live2D model. It fills its parent by default, so give the
- * parent a size. The ref is a `Live2DCanvasHandle`, null until it is ready.
+ * parent a size. The ref is a `Live2DCanvasHandle`, null until a model has loaded.
  */
 export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasProps>(function Live2DCanvas(props, ref) {
-  const { model, layout, follow, idle, pixelRatio, debug, className, style } = props;
+  const { model, layout, follow, idle, pixelRatio, debug, paused = false, className, style } = props;
   const canvas = useRef<HTMLCanvasElement>(null);
   const [live2d, setLive2D] = useState<Live2D | null>(null);
+  const [loaded, setLoaded] = useState(false);
   // The latest handlers, so passing inline functions does not resubscribe every render.
   const handlers = useRef(props);
   handlers.current = props;
 
-  useImperativeHandle(ref, () => (live2d ? handleOf(live2d) : null) as Live2DCanvasHandle, [live2d]);
+  useImperativeHandle(ref, () => (live2d && loaded ? handleOf(live2d) : null) as Live2DCanvasHandle, [live2d, loaded]);
 
   // These options are fixed for an instance's lifetime, so a change makes a new one.
   useEffect(() => {
@@ -62,12 +76,15 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
         if (cancelled) return created.destroy();
         instance = created;
         const handle = handleOf(created);
-        created.on("tap", (event) => handlers.current.onTap?.(event, handle));
+        created.on("tap", (event) => {
+          const { onTap } = handlers.current;
+          if (onTap) onTap(event, handle);
+          else reactToTap(handle, event.hitAreas, idle);
+        });
         created.on("motionstart", (event) => handlers.current.onMotionStart?.(event));
         created.on("motionend", (event) => handlers.current.onMotionEnd?.(event));
         created.on("motionevent", (value) => handlers.current.onMotionEvent?.(value));
         setLive2D(created);
-        handlers.current.onReady?.(handle);
       },
       (error: unknown) => handlers.current.onError?.(error),
     );
@@ -76,8 +93,13 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
       cancelled = true;
       instance?.destroy();
       setLive2D(null);
+      setLoaded(false);
     };
   }, [follow, idle, pixelRatio, debug]);
+
+  useEffect(() => {
+    if (live2d) live2d.paused = paused;
+  }, [live2d, paused]);
 
   const layoutKey = JSON.stringify(layout ?? {});
   useEffect(() => {
@@ -88,7 +110,10 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
     if (!live2d) return;
     const controller = new AbortController();
     live2d.load(model, { signal: controller.signal, layout: JSON.parse(layoutKey) as Layout }).then(
-      (info) => handlers.current.onLoad?.(info, handleOf(live2d)),
+      (info) => {
+        setLoaded(true);
+        handlers.current.onLoad?.(info, handleOf(live2d));
+      },
       (error: unknown) => {
         if (!isAbort(error)) handlers.current.onError?.(error);
       },

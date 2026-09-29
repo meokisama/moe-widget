@@ -7,7 +7,6 @@ function fake() {
     canvas: {} as HTMLCanvasElement,
     model: null,
     mouth: 0,
-    paused: false,
     motion: vi.fn(async () => true),
     expression: vi.fn(),
     load: vi.fn(),
@@ -28,8 +27,8 @@ describe("handleOf", () => {
     expect(live2d.motion).toHaveBeenCalledWith("TapBody", { priority: "force" });
     handle.mouth = 0.5;
     expect(live2d.mouth).toBe(0.5);
-    live2d.paused = true;
-    expect(handle.paused).toBe(true);
+    live2d.mouth = 0.25;
+    expect(handle.mouth).toBe(0.25);
   });
 
   it("leaves out what the component owns", () => {
@@ -37,6 +36,7 @@ describe("handleOf", () => {
     expect(handle).not.toHaveProperty("load");
     expect(handle).not.toHaveProperty("destroy");
     expect(handle).not.toHaveProperty("layout");
+    expect(handle).not.toHaveProperty("paused");
     expect(Object.isFrozen(handle)).toBe(true);
   });
 });

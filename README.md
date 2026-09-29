@@ -42,13 +42,7 @@ import { Live2DCanvas } from "moe-widget";
 export function Mascot() {
   return (
     <div style={{ width: 300, height: 400 }}>
-      <Live2DCanvas
-        model="/models/mao/Mao.model3.json"
-        onTap={({ hitAreas }, live2d) => {
-          if (hitAreas.includes("Head")) live2d.expression();
-          else live2d.motion("TapBody");
-        }}
-      />
+      <Live2DCanvas model="/models/mao/Mao.model3.json" />
     </div>
   );
 }
@@ -57,11 +51,13 @@ export function Mascot() {
 > The canvas fills its parent, so give the parent a size. The drawing buffer follows it, including on high-DPI screens.
 > Model files are fetched relative to the model3.json, so serve the model's folder as it is, for example from `public/`.
 
+The model idles, follows the pointer, and reacts to taps: a hit area named like "head" changes the expression, anywhere else plays a motion. Pass `onTap` to react your own way. Motion groups, expressions and hit areas are named by each model's author, so read them from `onLoad(model)` rather than guessing.
+
 Changing `model` loads the new model over the old one. The old one stays on screen until the new one is ready.
 
 ## Controlling the model
 
-The `ref` is a `Live2DCanvasHandle`, `null` until the canvas is ready. Use it to play motions, change expressions, speak, and the rest.
+The `ref` is a `Live2DCanvasHandle`, `null` until a model has loaded. Use it to play motions, change expressions, speak, and the rest.
 
 ```tsx
 import { useRef } from "react";
@@ -126,11 +122,11 @@ Every value is relative, so the same layout works for any size. Changing `layout
 | `idle`                                                             | the group named "idle"     | The motion group played when nothing else is, or `false`.                                                       |
 | `pixelRatio`                                                       | `min(devicePixelRatio, 2)` | Drawing-buffer pixels per CSS pixel.                                                                            |
 | `debug`                                                            | `false`                    | Logs Cubism's messages.                                                                                         |
+| `paused`                                                           | `false`                    | Stops the animation. Drawing also stops on its own while the canvas is off screen.                              |
 | `className`, `style`                                               |                            | Passed to the canvas.                                                                                           |
-| `onReady(live2d)`                                                  |                            | The canvas is ready, before the first model loads.                                                              |
 | `onLoad(model, live2d)`                                            |                            | A model finished loading. `model` lists its motion groups, expressions, hit areas, parameters and size.         |
 | `onError(error)`                                                   |                            | Loading failed.                                                                                                 |
-| `onTap(event, live2d)`                                             |                            | The canvas was tapped. `event` has `x`, `y` (CSS pixels from the top left), `hitAreas`, and the `PointerEvent`. |
+| `onTap(event, live2d)`                                             | the reaction above         | The canvas was tapped. `event` has `x`, `y` (CSS pixels from the top left), `hitAreas`, and the `PointerEvent`. |
 | `onMotionStart({ group, index })`, `onMotionEnd({ group, index })` |                            | A motion started or ended.                                                                                      |
 | `onMotionEvent(value)`                                             |                            | A user event fired from a motion's timeline.                                                                    |
 
@@ -148,8 +144,7 @@ The callbacks get the same handle as the `ref`. Changing `follow`, `idle`, `pixe
 | `lookAt(clientX, clientY)`, `lookAt(null)` | Turns the head toward a point, or back to the front.                                                                                                  |
 | `hitTest(clientX, clientY)`                | The hit areas under a point.                                                                                                                          |
 | `setParameter(id, value)`                  | Holds a parameter at a value over motions. Pass `null` to release it.                                                                                 |
-| `pause()`, `resume()`, `paused`            | Stops and restarts the animation. Drawing also stops on its own while the canvas is off screen.                                                       |
-| `model`                                    | Information about the loaded model, or `null`.                                                                                                        |
+| `model`                                    | Information about the model on screen.                                                                                                                |
 | `canvas`                                   | The canvas element.                                                                                                                                   |
 
 ## Development
