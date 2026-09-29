@@ -58,6 +58,8 @@ export class Live2D extends Emitter<Live2DEvents> {
   #pixelRatio: number | undefined;
   #debug: boolean;
   #idle: string | false | undefined;
+  #volume: number;
+  #sound: HTMLAudioElement | null = null;
   #follow: Follow = false;
   #unfollow: Array<() => void> = [];
   #model: Model | null = null;
@@ -96,6 +98,7 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#pixelRatio = options.pixelRatio;
     this.#debug = options.debug ?? false;
     this.#idle = options.idle;
+    this.#volume = options.volume ?? 1;
     this.#layout = options.layout ?? {};
     runtime.acquire(this.#debug);
 
@@ -150,6 +153,15 @@ export class Live2D extends Emitter<Live2DEvents> {
     return this.#model?.setIdle(idle) ?? Promise.resolve();
   }
 
+  get volume(): number {
+    return this.#volume;
+  }
+
+  set volume(volume: number) {
+    this.#volume = Math.max(0, Math.min(1, volume));
+    if (this.#sound) this.#sound.volume = this.#volume;
+  }
+
   get mouth(): number {
     return this.#mouth.manual;
   }
@@ -186,6 +198,10 @@ export class Live2D extends Emitter<Live2DEvents> {
           motionStart: (group, index) => this.emit("motionstart", { group, index }),
           motionEnd: (group, index) => this.emit("motionend", { group, index }),
           motionEvent: (value) => this.emit("motionevent", value),
+          sound: (sound) => this.#playSound(sound),
+          progress: (loaded, total) => {
+            if (this.#loading === controller) this.emit("progress", { loaded, total });
+          },
           mouth: (dt) => this.#mouth.value(dt),
         },
       });
@@ -265,6 +281,26 @@ export class Live2D extends Emitter<Live2DEvents> {
 
   hush(): void {
     this.#mouth.stop();
+  }
+
+  /** A motion's sound plays as a voice, so it moves the lips and replaces any voice playing. */
+  #playSound(sound: Blob): void {
+    if (this.#destroyed) return;
+    const url = URL.createObjectURL(sound);
+    const audio = new Audio(url);
+    audio.volume = this.#volume;
+    this.#sound = audio;
+    this.#mouth
+      .speak(audio)
+      .catch((error: unknown) => {
+        // Browsers block sound until the page has had a user gesture.
+        if (!(error instanceof DOMException && error.name === "NotAllowedError")) console.warn("moe-widget:", error);
+      })
+      .finally(() => {
+        audio.pause();
+        URL.revokeObjectURL(url);
+        if (this.#sound === audio) this.#sound = null;
+      });
   }
 
   /**

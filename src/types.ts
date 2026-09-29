@@ -50,6 +50,8 @@ export type Live2DOptions = {
   pixelRatio?: number | undefined;
   /** Logs Cubism's messages to the console. @default false */
   debug?: boolean | undefined;
+  /** How loud the sounds motions play are, 0 to 1. @default 1 */
+  volume?: number | undefined;
 };
 
 /** Fetches one of a model's files, documented on `Live2DCanvasProps.fetch`. */
@@ -101,7 +103,10 @@ export type TapEvent = {
 
 export type MotionEvent = { group: string; index: number };
 
+export type LoadProgress = { loaded: number; total: number };
+
 export type Live2DEvents = {
+  progress: LoadProgress;
   load: ModelInfo;
   error: unknown;
   tap: TapEvent;

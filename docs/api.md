@@ -11,14 +11,18 @@ Everything is imported from `moe-widget`. For how to use it, see the [guide](./g
 | `layout`                                                           | `{}`                       | A [`Layout`](#layout). Changing it moves the model without reloading it.                                        |
 | `follow`                                                           | `"window"`                 | What the eyes follow: the pointer anywhere, `"canvas"` only over it, or `false`.                                |
 | `idle`                                                             | `"idle"`                   | The motion group played when nothing else is, in any case, or `false`.                                          |
+| `volume`                                                           | `1`                        | How loud the sounds motions play are, 0 to 1.                                                                   |
 | `pixelRatio`                                                       | `min(devicePixelRatio, 2)` | Drawing-buffer pixels per CSS pixel.                                                                            |
 | `debug`                                                            | `false`                    | Logs Cubism's messages.                                                                                         |
 | `className`, `style`                                               |                            | Passed to the canvas.                                                                                           |
+| `onProgress({ loaded, total })`                                    |                            | Another of the files a load waits for arrived: the model3.json first, then the rest up to the idle group's motions. |
 | `onLoad(model, live2d)`                                            |                            | A model finished loading. `model` is a [`ModelInfo`](#modelinfo).                                               |
 | `onError(error)`                                                   |                            | Loading failed.                                                                                                 |
 | `onTap(event, live2d)`                                             | see below                  | The canvas was tapped. `event` is a [`TapEvent`](#tapevent).                                                    |
 | `onMotionStart({ group, index })`, `onMotionEnd({ group, index })` |                            | A motion started or ended.                                                                                      |
 | `onMotionEvent(value)`                                             |                            | A user event fired from a motion's timeline.                                                                    |
+
+A motion's sound plays as a voice: it moves the lips, replaces any voice playing, and `hush()` stops it. Browsers block it until the page has had a user gesture.
 
 The callbacks get the same handle as the `ref`. Changing `pixelRatio` or `debug` restarts the canvas.
 
@@ -82,5 +86,6 @@ A press that moves more than 10 px is a drag and fires no tap.
 | `Priority`      | `"idle"` yields to everything, `"normal"` (the default) waits for a running `normal` motion to end, `"force"` interrupts. |
 | `MotionEvent`   | `{ group, index }`, passed to `onMotionStart` and `onMotionEnd`.                                                      |
 | `Voice`         | A URL, an `HTMLMediaElement`, or a `MediaStream`.                                                                     |
+| `LoadProgress`  | `{ loaded, total }`, passed to `onProgress`.                                                                          |
 | `Fetch`         | `(url: URL, init: RequestInit) => Promise<Response>`, the type of the `fetch` prop.                                   |
 | `Live2DCanvasProps` | The props above.                                                                                                  |

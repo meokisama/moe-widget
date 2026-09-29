@@ -71,6 +71,10 @@ export type Hooks = {
   motionStart(group: string, index: number): void;
   motionEnd(group: string, index: number): void;
   motionEvent(value: string): void;
+  /** A motion with a sound started. */
+  sound(sound: Blob): void;
+  /** Another of the files the load waits for arrived. */
+  progress(loaded: number, total: number): void;
   /** The mouth opening this frame, 0 to 1. */
   mouth(deltaSeconds: number): number;
 };
@@ -115,6 +119,7 @@ export class Model extends CubismUserModel {
   #hooks: Hooks;
   #fetch: Fetch;
   #signal: AbortSignal | undefined;
+  #arrived: (() => void) | null = null;
   #scheduler = new CubismUpdateScheduler();
   #look: CubismLook | null = null;
   #motionUpdated = false;
@@ -155,14 +160,20 @@ export class Model extends CubismUserModel {
     }
   }
 
-  async #response(url: URL, signal: AbortSignal | undefined): Promise<Response> {
+  async #read<T>(url: URL, signal: AbortSignal | undefined, body: (response: Response) => Promise<T>): Promise<T> {
     const response = await this.#fetch(url, signal ? { signal } : {});
     if (!response.ok) throw new Error(`moe-widget: ${response.status} ${response.statusText} for ${url}`);
-    return response;
+    const result = await body(response);
+    this.#arrived?.();
+    return result;
   }
 
-  async #buffer(url: URL, signal: AbortSignal | undefined): Promise<ArrayBuffer> {
-    return (await this.#response(url, signal)).arrayBuffer();
+  #buffer(url: URL, signal: AbortSignal | undefined): Promise<ArrayBuffer> {
+    return this.#read(url, signal, (response) => response.arrayBuffer());
+  }
+
+  #blob(url: URL, signal: AbortSignal | undefined): Promise<Blob> {
+    return this.#read(url, signal, (response) => response.blob());
   }
 
   #check(): void {
@@ -182,11 +193,27 @@ export class Model extends CubismUserModel {
 
     const mocName = setting.getModelFileName();
     if (!mocName) throw new Error(`moe-widget: ${url} names no .moc3 file`);
+    this.#groups = Array.from({ length: setting.getMotionGroupCount() }, (_, i) => setting.getMotionGroupName(i));
 
     // Everything but the moc is optional, so fetch it all at once.
     const optional = (name: string) => (name ? this.#buffer(file(name), signal) : Promise.resolve(null));
     const expressionNames = Array.from({ length: setting.getExpressionCount() }, (_, i) => setting.getExpressionName(i));
     const textureNames = Array.from({ length: setting.getTextureCount() }, (_, i) => setting.getTextureFileName(i));
+
+    // The idle group's motions and sounds load before the model shows, so they count too.
+    const idle = setup.idle === false ? undefined : this.#group(setup.idle ?? "idle");
+    const idleFiles = Array.from({ length: idle ? setting.getMotionCount(idle) : 0 }, (_, i) =>
+      setting.getMotionSoundFileName(idle!, i) ? 2 : 1,
+    );
+    const total =
+      2 +
+      [setting.getPhysicsFileName(), setting.getPoseFileName(), setting.getUserDataFile()].filter(Boolean).length +
+      expressionNames.length +
+      textureNames.filter(Boolean).length +
+      idleFiles.reduce((sum, count) => sum + count, 0);
+    let loaded = 1;
+    this.#hooks.progress(loaded, total);
+    this.#arrived = () => this.#hooks.progress(++loaded, total);
     const [moc, physics, pose, userData, expressions, images] = await Promise.all([
       this.#buffer(file(mocName), signal),
       optional(setting.getPhysicsFileName()),
@@ -269,10 +296,9 @@ export class Model extends CubismUserModel {
     }
     this.#scheduler.sortUpdatableList();
 
-    const groups = Array.from({ length: setting.getMotionGroupCount() }, (_, i) => setting.getMotionGroupName(i));
-    this.#groups = groups;
     // Only the idle motions load up front; the rest load the first time they play.
     await this.setIdle(setup.idle);
+    this.#arrived = null;
     this.#check();
 
     this.#uploadTextures();
@@ -289,7 +315,7 @@ export class Model extends CubismUserModel {
     this.info = {
       url: this.#base.href,
       motions: Object.fromEntries(
-        groups.map((group) => [
+        this.#groups.map((group) => [
           group,
           Array.from({ length: setting.getMotionCount(group) }, (_, i) =>
             setting.getMotionFileName(group, i).replace(/^.*\//, "").replace(/\.motion3\.json$/i, ""),
@@ -305,7 +331,7 @@ export class Model extends CubismUserModel {
   }
 
   async #loadImage(url: URL, signal: AbortSignal | undefined): Promise<ImageBitmap> {
-    const blob = await (await this.#response(url, signal)).blob();
+    const blob = await this.#blob(url, signal);
     // Premultiplied like Live2D's samples; the renderer is told the same below.
     return createImageBitmap(blob, { premultiplyAlpha: "premultiply", colorSpaceConversion: "none" });
   }
@@ -367,7 +393,11 @@ export class Model extends CubismUserModel {
     let loading = this.#motions.get(key);
     if (!loading) {
       const name = this.#setting.getMotionFileName(group, index);
-      loading = this.#buffer(new URL(name, this.#base), undefined).then((buffer) => {
+      const soundName = this.#setting.getMotionSoundFileName(group, index);
+      loading = Promise.all([
+        this.#buffer(new URL(name, this.#base), undefined),
+        soundName ? this.#blob(new URL(soundName, this.#base), undefined) : null,
+      ]).then(([buffer, sound]) => {
         if (this.#released) return null;
         const motion = this.loadMotion(
           buffer,
@@ -382,7 +412,10 @@ export class Model extends CubismUserModel {
         );
         if (!motion) return null;
         motion.setEffectIds(this.#eyeBlinkIds, this.#lipSyncIds);
-        motion.setBeganMotionHandler(() => this.#hooks.motionStart(group, index));
+        motion.setBeganMotionHandler(() => {
+          this.#hooks.motionStart(group, index);
+          if (sound) this.#hooks.sound(sound);
+        });
         motion.setFinishedMotionHandler(() => {
           this.#hooks.motionEnd(group, index);
           const waiting = this.#pending.get(motion);
@@ -544,6 +577,7 @@ export class Model extends CubismUserModel {
   override release(): void {
     if (this.#released) return;
     this.#released = true;
+    this.#arrived = null;
     for (const waiting of this.#pending.values()) for (const resolve of waiting) resolve(false);
     this.#pending.clear();
     this.#scheduler.release();

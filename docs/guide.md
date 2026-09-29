@@ -23,6 +23,17 @@ export function Mascot() {
 - Changing `model` keeps the old model on screen until the new one is ready.
 - A missing or invalid model reaches `onError`. Nothing is drawn while the canvas is off screen.
 
+## Showing progress
+
+```tsx
+const [progress, setProgress] = useState(0);
+
+<Live2DCanvas
+  model="/models/mao/Mao.model3.json"
+  onProgress={({ loaded, total }) => setProgress(loaded / total)}
+/>;
+```
+
 ## Controlling the model
 
 ```tsx
@@ -71,6 +82,8 @@ live2d.current?.speak(mic);
 
 live2d.current?.hush();
 ```
+
+Sounds the model's motions carry play the same way, at `volume`.
 
 The lips move the parameters in the model's LipSync group, or `ParamMouthOpenY` when it lists none. Browsers only start audio after a user gesture, so call `speak` from one.
 

@@ -37,7 +37,7 @@ The Framework is a global. `acquire` and `release` in `model.ts` count its users
 | `pixelRatio`, `debug`  | Destroys the `Live2D` instance and creates a new one.     |
 | `model`                | `live2d.load(url)` with the current `fetch`, aborted when the URL changes again or the component unmounts. |
 | `layout`               | Sets `live2d.layout`, compared by JSON so an inline object does not re-run it. |
-| `follow`, `idle`       | Set on the instance in place.                              |
+| `follow`, `idle`, `volume` | Set on the instance in place.                          |
 
 Callbacks are read from a ref at call time, so inline functions never resubscribe.
 
@@ -47,7 +47,7 @@ The ref becomes the handle only after the first `onLoad`, and goes back to `null
 
 ## Loading a model
 
-`Model.load` fetches the model3.json through the `fetch` prop (the page's `fetch` by default), then the moc3, physics, pose, user data, expressions and textures in parallel. Only the idle group's motions load up front, the others on first play. Textures are decoded to premultiplied `ImageBitmap`s. Any failure releases the partial model and rejects, so a load never hangs.
+`Model.load` fetches the model3.json through the `fetch` prop (the page's `fetch` by default), then the moc3, physics, pose, user data, expressions and textures in parallel. Only the idle group's motions load up front, the others on first play. A motion's sound loads with it and plays through `Mouth.speak` when the motion starts. Every file goes through one reader that counts it for `progress` while the load runs. Textures are decoded to premultiplied `ImageBitmap`s. Any failure releases the partial model and rejects, so a load never hangs.
 
 A model without a LipSync group gets `ParamMouthOpenY`, if it has one. Breathing and look-at use the weights from Live2D's samples.
 

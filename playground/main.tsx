@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactNode, type RefObject, StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type ModelInfo } from "moe-widget";
+import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type LoadProgress, type ModelInfo } from "moe-widget";
 import { type Source, sourceFromZip } from "./zip";
 
 // Relative, so the build works under any path, such as GitHub Pages' /moe-widget/.
@@ -185,6 +185,8 @@ function App() {
   const upload = useRef<HTMLInputElement>(null);
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [loadMs, setLoadMs] = useState<number | null>(null);
+  const [progress, setProgress] = useState<LoadProgress | null>(null);
+  const [volume, setVolume] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [lines, setLines] = useState<string[]>([]);
   const stage = useRef<HTMLElement>(null);
@@ -203,6 +205,7 @@ function App() {
   function restartClock() {
     started.current = performance.now();
     setLoadMs(null);
+    setProgress(null);
     setError(null);
   }
 
@@ -262,6 +265,11 @@ function App() {
           layout={layout}
           idle={idle === DEFAULT ? undefined : idle === OFF ? false : idle}
           follow={follow}
+          volume={volume}
+          onProgress={(next) => {
+            setProgress(next);
+            if (next.loaded === next.total) log(`fetched ${next.total} files`);
+          }}
           onLoad={(loaded, current) => {
             current.mouth = mouth;
             setInfo(loaded);
@@ -278,7 +286,7 @@ function App() {
             {error ? (
               <span className="chip error">{error}</span>
             ) : loadMs === null ? (
-              <span className="chip">Loading…</span>
+              <span className="chip">Loading… {progress && `${progress.loaded} / ${progress.total} files`}</span>
             ) : (
               info && (
                 <>
@@ -380,6 +388,9 @@ function App() {
                 <option key={group}>{group}</option>
               ))}
             </select>
+          </Row>
+          <Row label="Sound volume" value={`${Math.round(volume * 100)}%`}>
+            <Range min={0} max={1} step={0.01} value={volume} onChange={setVolume} />
           </Row>
           <Row label="Eyes follow">
             <Segmented
