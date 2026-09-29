@@ -125,6 +125,7 @@ export class Model extends CubismUserModel {
   #scheduler = new CubismUpdateScheduler();
   #look: CubismLook | null = null;
   #motionUpdated = false;
+  #groups: string[] = [];
   #idle: string | null = null;
   #eyeBlinkIds: CubismIdHandle[] = [];
   #lipSyncIds: CubismIdHandle[] = [];
@@ -265,20 +266,10 @@ export class Model extends CubismUserModel {
     this.#scheduler.sortUpdatableList();
 
     const groups = Array.from({ length: setting.getMotionGroupCount() }, (_, i) => setting.getMotionGroupName(i));
-    this.#idle =
-      setup.idle === false
-        ? null
-        : setup.idle !== undefined
-          ? groups.includes(setup.idle)
-            ? setup.idle
-            : null
-          : (groups.find((group) => group.toLowerCase() === "idle") ?? null);
+    this.#groups = groups;
     // Only the idle motions load up front; the rest load the first time they play.
-    if (this.#idle) {
-      const idle = this.#idle;
-      await Promise.all(Array.from({ length: setting.getMotionCount(idle) }, (_, i) => this.#motion(idle, i)));
-      this.#check();
-    }
+    await this.setIdle(setup.idle);
+    this.#check();
 
     this.#uploadTextures();
     this.resize(setup.width, setup.height);
@@ -405,10 +396,30 @@ export class Model extends CubismUserModel {
     return next >= last ? next + 1 : next;
   }
 
+  /** The group as the model spells it: an exact match, or else one in any case. */
+  #group(name: string): string | undefined {
+    if (this.#groups.includes(name)) return name;
+    const lower = name.toLowerCase();
+    return this.#groups.find((group) => group.toLowerCase() === lower);
+  }
+
+  /**
+   * Sets the group played when nothing else is: false for none, undefined for
+   * the one named "idle". The motion playing finishes first. Resolves once the
+   * group's motions have loaded.
+   */
+  async setIdle(idle: string | false | undefined): Promise<void> {
+    const group = idle === false ? null : (this.#group(idle ?? "idle") ?? null);
+    this.#idle = group;
+    if (!group) return;
+    await Promise.all(Array.from({ length: this.#setting.getMotionCount(group) }, (_, i) => this.#motion(group, i)));
+  }
+
   /** Plays a motion. Resolves true once it finishes, false if it could not start. */
-  async startMotion(group: string, options: MotionOptions = {}): Promise<boolean> {
-    const count = this.#setting.getMotionCount(group);
-    if (count === 0) throw new RangeError(`moe-widget: the model has no motion group "${group}"`);
+  async startMotion(name: string, options: MotionOptions = {}): Promise<boolean> {
+    const group = this.#group(name);
+    const count = group === undefined ? 0 : this.#setting.getMotionCount(group);
+    if (group === undefined || count === 0) throw new RangeError(`moe-widget: the model has no motion group "${name}"`);
     const index = options.index ?? this.#pick(group, count);
     if (index < 0 || index >= count) throw new RangeError(`moe-widget: "${group}" has no motion ${index}`);
     const priority = PRIORITY[options.priority ?? "normal"];

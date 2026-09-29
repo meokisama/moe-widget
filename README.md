@@ -119,7 +119,7 @@ Every value is relative, so the same layout works for any size. Changing `layout
 | `model`                                                            |                            | URL of the model3.json. Required.                                                                               |
 | `layout`                                                           | `{}`                       | See [Layout](#layout).                                                                                          |
 | `follow`                                                           | `"window"`                 | What the eyes follow: the pointer anywhere, `"canvas"` only over it, or `false`.                                |
-| `idle`                                                             | the group named "idle"     | The motion group played when nothing else is, or `false`.                                                       |
+| `idle`                                                             | `"idle"`                   | The motion group played when nothing else is, in any case, or `false`.                                          |
 | `pixelRatio`                                                       | `min(devicePixelRatio, 2)` | Drawing-buffer pixels per CSS pixel.                                                                            |
 | `debug`                                                            | `false`                    | Logs Cubism's messages.                                                                                         |
 | `className`, `style`                                               |                            | Passed to the canvas.                                                                                           |
@@ -129,22 +129,22 @@ Every value is relative, so the same layout works for any size. Changing `layout
 | `onMotionStart({ group, index })`, `onMotionEnd({ group, index })` |                            | A motion started or ended.                                                                                      |
 | `onMotionEvent(value)`                                             |                            | A user event fired from a motion's timeline.                                                                    |
 
-The callbacks get the same handle as the `ref`. Changing `follow`, `idle`, `pixelRatio` or `debug` restarts the canvas.
+The callbacks get the same handle as the `ref`. Changing `pixelRatio` or `debug` restarts the canvas.
 
 ### `Live2DCanvasHandle`
 
-| Member                                     |                                                                                                                                                       |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `motion(group, { index?, priority? })`     | Resolves `true` when the motion ends, `false` if it could not start or was cut off. The priority is `"idle"`, `"normal"` (the default), or `"force"`. |
-| `expression(name?)`                        | Sets an expression. With no name it picks a random one, and `null` clears it.                                                                         |
-| `speak(voice, { signal? })`                | Moves the lips with a URL, a media element, or a `MediaStream`.                                                                                       |
-| `hush()`                                   | Stops the voice.                                                                                                                                      |
-| `mouth`                                    | How open the mouth is, from 0 to 1.                                                                                                                   |
-| `lookAt(clientX, clientY)`, `lookAt(null)` | Turns the head toward a point, or back to the front.                                                                                                  |
-| `hitTest(clientX, clientY)`                | The hit areas under a point.                                                                                                                          |
-| `setParameter(id, value)`                  | Holds a parameter at a value over motions. Pass `null` to release it.                                                                                 |
-| `model`                                    | Information about the model on screen.                                                                                                                |
-| `canvas`                                   | The canvas element.                                                                                                                                   |
+| Member                                     |                                                                                                                                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `motion(group, { index?, priority? })`     | Resolves `true` when the motion ends, `false` if it could not start or was cut off. The group matches in any case. The priority is `"idle"`, `"normal"` (the default), or `"force"`. |
+| `expression(name?)`                        | Sets an expression. With no name it picks a random one, and `null` clears it.                                                                                                        |
+| `speak(voice, { signal? })`                | Moves the lips with a URL, a media element, or a `MediaStream`.                                                                                                                      |
+| `hush()`                                   | Stops the voice.                                                                                                                                                                     |
+| `mouth`                                    | How open the mouth is, from 0 to 1.                                                                                                                                                  |
+| `lookAt(clientX, clientY)`, `lookAt(null)` | Turns the head toward a point, or back to the front.                                                                                                                                 |
+| `hitTest(clientX, clientY)`                | The hit areas under a point.                                                                                                                                                         |
+| `setParameter(id, value)`                  | Holds a parameter at a value over motions. Pass `null` to release it.                                                                                                                |
+| `model`                                    | Information about the model on screen.                                                                                                                                               |
+| `canvas`                                   | The canvas element.                                                                                                                                                                  |
 
 ## Development
 

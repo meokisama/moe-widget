@@ -14,8 +14,8 @@ export type Live2DCanvasHandle = {
   /** How open the mouth is, 0 to 1, on top of any voice playing. */
   mouth: number;
   /**
-   * Plays a motion from a group. Resolves true when it finishes, or false if a
-   * motion of equal or higher priority kept it from starting, or it was cut off.
+   * Plays a motion from a group, matched in any case. Resolves true when it finishes,
+   * or false if a motion of equal or higher priority kept it from starting, or it was cut off.
    */
   motion(group: string, options?: MotionOptions): Promise<boolean>;
   /** Sets an expression by name, a random one when called with no name, or clears it with null. */

@@ -5,6 +5,7 @@ import type { Layout, Live2DEvents, Live2DOptions, LoadOptions, ModelInfo, Motio
 import type { Model } from "./model";
 
 type Runtime = typeof import("./model");
+type Follow = NonNullable<Live2DOptions["follow"]>;
 type Events = HTMLElementEventMap & { webglcontextlost: WebGLContextEvent; webglcontextrestored: WebGLContextEvent };
 
 // The newest Core the bundled Framework is written for; older ones lack blend modes.
@@ -54,8 +55,11 @@ export class Live2D extends Emitter<Live2DEvents> {
 
   #runtime: Runtime;
   #gl: WebGLRenderingContext;
-  #options: Live2DOptions;
+  #pixelRatio: number | undefined;
   #debug: boolean;
+  #idle: string | false | undefined;
+  #follow: Follow = false;
+  #unfollow: Array<() => void> = [];
   #model: Model | null = null;
   #loading: AbortController | null = null;
   #layout: Layout;
@@ -89,13 +93,18 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.canvas = canvas;
     this.#gl = gl;
     this.#runtime = runtime;
-    this.#options = options;
+    this.#pixelRatio = options.pixelRatio;
     this.#debug = options.debug ?? false;
+    this.#idle = options.idle;
     this.#layout = options.layout ?? {};
     runtime.acquire(this.#debug);
 
     this.#observe();
     this.#listen();
+    this.follow = options.follow ?? "window";
+    this.#cleanup.push(() => {
+      for (const off of this.#unfollow) off();
+    });
     this.#frame = requestAnimationFrame(this.#tick);
   }
 
@@ -110,6 +119,35 @@ export class Live2D extends Emitter<Live2DEvents> {
   set layout(layout: Layout) {
     this.#layout = layout;
     this.#placement = null;
+  }
+
+  get follow(): Follow {
+    return this.#follow;
+  }
+
+  set follow(follow: Follow) {
+    for (const off of this.#unfollow.splice(0)) off();
+    this.#follow = follow;
+    this.lookAt(null);
+    if (follow === false) return;
+    const target = follow === "window" ? window : this.canvas;
+    this.#on(target, "pointermove", (event) => this.lookAt(event.clientX, event.clientY), this.#unfollow);
+    if (follow === "window") {
+      // mouseout with no relatedTarget means the pointer left the page.
+      const leave = (event: MouseEvent) => {
+        if (!event.relatedTarget) this.lookAt(null);
+      };
+      this.#on(document.documentElement, "mouseout", leave, this.#unfollow);
+    } else {
+      this.#on(this.canvas, "pointerleave", () => this.lookAt(null), this.#unfollow);
+    }
+  }
+
+  /** Changes the idle group, as `Live2DOptions.idle` describes. Resolves once its motions have loaded. */
+  setIdle(idle: string | false | undefined): Promise<void> {
+    this.#assertAlive();
+    this.#idle = idle;
+    return this.#model?.setIdle(idle) ?? Promise.resolve();
   }
 
   get mouth(): number {
@@ -133,13 +171,14 @@ export class Live2D extends Emitter<Live2DEvents> {
     if (options.signal?.aborted) abort();
     options.signal?.addEventListener("abort", abort, { once: true });
 
+    const idle = this.#idle;
     try {
       const model = await this.#runtime.Model.load(url, {
         gl: this.#gl,
         width: this.canvas.width,
         height: this.canvas.height,
         signal: controller.signal,
-        idle: this.#options.idle,
+        idle,
         mouth: options.mouth,
         hooks: {
           motionStart: (group, index) => this.emit("motionstart", { group, index }),
@@ -148,6 +187,13 @@ export class Live2D extends Emitter<Live2DEvents> {
           mouth: (dt) => this.#mouth.value(dt),
         },
       });
+      // setIdle ran on the old model while this one loaded.
+      if (this.#idle !== idle) {
+        await model.setIdle(this.#idle).catch((error: unknown) => {
+          model.release();
+          throw error;
+        });
+      }
       // A load that finished just as it was aborted still has to be thrown away.
       if (controller.signal.aborted) {
         model.release();
@@ -253,7 +299,7 @@ export class Live2D extends Emitter<Live2DEvents> {
   }
 
   #resize(width: number, height: number): void {
-    const ratio = this.#options.pixelRatio ?? Math.min(globalThis.devicePixelRatio || 1, 2);
+    const ratio = this.#pixelRatio ?? Math.min(globalThis.devicePixelRatio || 1, 2);
     this.#size = { width, height };
     this.canvas.width = Math.max(1, Math.round(width * ratio));
     this.canvas.height = Math.max(1, Math.round(height * ratio));
@@ -293,9 +339,10 @@ export class Live2D extends Emitter<Live2DEvents> {
     target: HTMLElement | Window,
     type: K,
     listener: (event: Events[K]) => void,
+    cleanup = this.#cleanup,
   ): void {
     target.addEventListener(type, listener as EventListener);
-    this.#cleanup.push(() => target.removeEventListener(type, listener as EventListener));
+    cleanup.push(() => target.removeEventListener(type, listener as EventListener));
   }
 
   #listen(): void {
@@ -329,19 +376,6 @@ export class Live2D extends Emitter<Live2DEvents> {
         event,
       });
     });
-
-    const follow = this.#options.follow ?? "window";
-    if (follow === false) return;
-    const target = follow === "window" ? window : canvas;
-    this.#on(target, "pointermove", (event) => this.lookAt(event.clientX, event.clientY));
-    if (follow === "window") {
-      // mouseout with no relatedTarget means the pointer left the page.
-      this.#on(document.documentElement, "mouseout", (event) => {
-        if (!event.relatedTarget) this.lookAt(null);
-      });
-    } else {
-      this.#on(canvas, "pointerleave", () => this.lookAt(null));
-    }
   }
 
   #tick = (now: number): void => {

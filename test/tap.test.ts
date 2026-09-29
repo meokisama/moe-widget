@@ -60,8 +60,8 @@ describe("reactToTap", () => {
     expect(played).toEqual(new Set(["Emotion", "Note", "SectionClear", "Song"]));
   });
 
-  it("leaves out the group named by the idle prop instead", () => {
-    const played = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((random) => playedFor(RORO, "Emotion", random)));
+  it("leaves out the group named by the idle prop instead, in any case", () => {
+    const played = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((random) => playedFor(RORO, "emotion", random)));
     expect(played).not.toContain("Emotion");
     expect(played).toContain("Idle");
   });

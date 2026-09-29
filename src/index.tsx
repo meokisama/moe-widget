@@ -57,8 +57,6 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
     let instance: Live2D | null = null;
     let cancelled = false;
     const options: Live2DOptions = {};
-    if (follow !== undefined) options.follow = follow;
-    if (idle !== undefined) options.idle = idle;
     if (pixelRatio !== undefined) options.pixelRatio = pixelRatio;
     if (debug !== undefined) options.debug = debug;
 
@@ -70,7 +68,7 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
         created.on("tap", (event) => {
           const { onTap } = handlers.current;
           if (onTap) onTap(event, handle);
-          else reactToTap(handle, event.hitAreas, idle);
+          else reactToTap(handle, event.hitAreas, handlers.current.idle);
         });
         created.on("motionstart", (event) => handlers.current.onMotionStart?.(event));
         created.on("motionend", (event) => handlers.current.onMotionEnd?.(event));
@@ -86,7 +84,16 @@ export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasPr
       setLive2D(null);
       setLoaded(false);
     };
-  }, [follow, idle, pixelRatio, debug]);
+  }, [pixelRatio, debug]);
+
+  useEffect(() => {
+    if (live2d) live2d.follow = follow ?? "window";
+  }, [live2d, follow]);
+
+  // Before the load effect, so the first model loads with this idle group.
+  useEffect(() => {
+    live2d?.setIdle(idle).catch((error: unknown) => handlers.current.onError?.(error));
+  }, [live2d, idle]);
 
   const layoutKey = JSON.stringify(layout ?? {});
   useEffect(() => {

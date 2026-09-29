@@ -38,8 +38,9 @@ export type Live2DOptions = {
    */
   follow?: "window" | "canvas" | false;
   /**
-   * The motion group played whenever nothing else is. By default, the group
-   * named "idle" in any case, if the model has one.
+   * The motion group played whenever nothing else is, matched in any case.
+   * By default "idle", if the model has one. A change takes over once the
+   * motion playing ends.
    */
   idle?: string | false;
   /**

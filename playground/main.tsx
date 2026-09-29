@@ -1,6 +1,6 @@
 import { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type ModelInfo } from "moe-widget";
+import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type ModelInfo } from "moe-widget";
 
 const MODELS = {
   mao: "/mao/Mao.model3.json",
@@ -23,6 +23,11 @@ const ALIGNS = {
 } as const;
 
 type Fit = NonNullable<Layout["fit"]>;
+type Follow = NonNullable<Live2DCanvasProps["follow"]>;
+
+// The idle select's values for leaving the prop out and for false; any other value is a group.
+const DEFAULT = "";
+const OFF = "(off)";
 
 function App() {
   const live2d = useRef<Live2DCanvasHandle>(null);
@@ -38,6 +43,8 @@ function App() {
   const [scale, setScale] = useState(1);
   const [force, setForce] = useState(false);
   const [mouth, setMouth] = useState(0);
+  const [idle, setIdle] = useState(DEFAULT);
+  const [follow, setFollow] = useState<Follow>("window");
   const started = useRef(performance.now());
 
   const log = (message: string) =>
@@ -48,6 +55,7 @@ function App() {
   function choose(next: ModelName) {
     started.current = performance.now();
     setStatus(`Loading ${next}…`);
+    setIdle(DEFAULT);
     setName(next);
   }
 
@@ -74,6 +82,8 @@ function App() {
           ref={live2d}
           model={MODELS[name]}
           layout={layout}
+          {...(idle === DEFAULT ? {} : { idle: idle === OFF ? false : idle })}
+          follow={follow}
           onLoad={(loaded, current) => {
             current.mouth = mouth;
             setInfo(loaded);
@@ -151,6 +161,27 @@ function App() {
           <label>
             <input type="checkbox" checked={force} onChange={(event) => setForce(event.target.checked)} /> Force
             priority
+          </label>
+          <label>
+            Idle
+            <select value={idle} onChange={(event) => setIdle(event.target.value)}>
+              <option value={DEFAULT}>Default</option>
+              <option value={OFF}>Off</option>
+              {Object.keys(info?.motions ?? {}).map((group) => (
+                <option key={group}>{group}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Eyes follow
+            <select
+              value={String(follow)}
+              onChange={(event) => setFollow(event.target.value === "false" ? false : (event.target.value as Follow))}
+            >
+              <option value="window">Window</option>
+              <option value="canvas">Canvas</option>
+              <option value="false">Nothing</option>
+            </select>
           </label>
         </fieldset>
 
