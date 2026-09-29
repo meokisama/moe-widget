@@ -20,7 +20,7 @@
 ## Features
 
 - **One install, no setup.** The Cubism Core and the WebGL shaders ship inside the package. No script tags, CDN files, or folders to copy.
-- **Small until used.** Importing costs a few kilobytes. The Core and the Framework (about 110 kB gzipped) load when the first canvas mounts, as their own chunks.
+- **Small until used.** Importing costs a few kilobytes. The Core and the Framework (about 110 kB gzipped) load when the first canvas mounts, as their own chunks. Nothing is drawn while the canvas is off screen.
 - **SSR safe.** Works in Next.js and other server-rendered apps. The component is a client component, and importing on the server touches nothing browser-only.
 - **Honest promises.** A missing or invalid model reaches `onError` instead of hanging. `motion()` resolves when the motion ends.
 - **Safe to unmount.** Any number of canvases can come and go in any order, even while loading. StrictMode works.
@@ -122,7 +122,6 @@ Every value is relative, so the same layout works for any size. Changing `layout
 | `idle`                                                             | the group named "idle"     | The motion group played when nothing else is, or `false`.                                                       |
 | `pixelRatio`                                                       | `min(devicePixelRatio, 2)` | Drawing-buffer pixels per CSS pixel.                                                                            |
 | `debug`                                                            | `false`                    | Logs Cubism's messages.                                                                                         |
-| `paused`                                                           | `false`                    | Stops the animation. Drawing also stops on its own while the canvas is off screen.                              |
 | `className`, `style`                                               |                            | Passed to the canvas.                                                                                           |
 | `onLoad(model, live2d)`                                            |                            | A model finished loading. `model` lists its motion groups, expressions, hit areas, parameters and size.         |
 | `onError(error)`                                                   |                            | Loading failed.                                                                                                 |

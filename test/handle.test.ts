@@ -36,7 +36,6 @@ describe("handleOf", () => {
     expect(handle).not.toHaveProperty("load");
     expect(handle).not.toHaveProperty("destroy");
     expect(handle).not.toHaveProperty("layout");
-    expect(handle).not.toHaveProperty("paused");
     expect(Object.isFrozen(handle)).toBe(true);
   });
 });

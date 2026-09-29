@@ -4,7 +4,7 @@ import type { ModelInfo, MotionOptions } from "./types";
 
 /**
  * What `Live2DCanvas` gives its ref and callbacks, once a model has loaded.
- * Loading, layout, pausing and teardown follow the component's props and
+ * Loading, layout and teardown follow the component's props and
  * lifetime, so they are not part of it.
  */
 export type Live2DCanvasHandle = {

@@ -120,9 +120,6 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#mouth.manual = Math.max(0, Math.min(1, value));
   }
 
-  /** Stops the animation while true. */
-  paused = false;
-
   /**
    * Loads a model3.json and swaps it in once everything is ready; the previous
    * model stays on screen until then. A newer load aborts an older one.
@@ -353,7 +350,7 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#last = now;
 
     const model = this.#model;
-    if (this.paused || !this.#visible || this.#lost || !model || this.#gl.isContextLost()) return;
+    if (!this.#visible || this.#lost || !model || this.#gl.isContextLost()) return;
 
     const gl = this.#gl;
     const { width, height } = this.canvas;

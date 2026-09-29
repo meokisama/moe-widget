@@ -38,7 +38,6 @@ function App() {
   const [scale, setScale] = useState(1);
   const [force, setForce] = useState(false);
   const [mouth, setMouth] = useState(0);
-  const [paused, setPaused] = useState(false);
   const started = useRef(performance.now());
 
   const log = (message: string) =>
@@ -75,7 +74,6 @@ function App() {
           ref={live2d}
           model={MODELS[name]}
           layout={layout}
-          paused={paused}
           onLoad={(loaded, current) => {
             current.mouth = mouth;
             setInfo(loaded);
@@ -199,9 +197,6 @@ function App() {
         <fieldset>
           <legend>Instance</legend>
           <div className="buttons">
-            <button onClick={() => setPaused((value) => !value)}>
-              {paused ? "Resume" : "Pause"}
-            </button>
             <button
               onClick={() => {
                 log("remounted");
