@@ -1,7 +1,6 @@
 import { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { Layout, Live2D, ModelInfo } from "moe-widget";
-import { Live2DCanvas } from "moe-widget/react";
+import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type ModelInfo } from "moe-widget";
 
 const MODELS = {
   mao: "/mao/Mao.model3.json",
@@ -12,7 +11,7 @@ const MODELS = {
 type ModelName = keyof typeof MODELS;
 
 /** A head tap changes the expression, any other tap plays the model's tap motion. */
-function reactToTap(live2d: Live2D, hitAreas: string[]): void {
+function reactToTap(live2d: Live2DCanvasHandle, hitAreas: string[]): void {
   const info = live2d.model;
   if (!info) return;
   const tap = Object.keys(info.motions).find((group) => /tap/i.test(group));
@@ -35,7 +34,7 @@ const ALIGNS = {
 type Fit = NonNullable<Layout["fit"]>;
 
 function App() {
-  const live2d = useRef<Live2D>(null);
+  const live2d = useRef<Live2DCanvasHandle>(null);
   // Changing the key remounts the canvas: the React way to destroy and recreate.
   const [instance, setInstance] = useState(0);
   const [name, setName] = useState<ModelName>("mao");

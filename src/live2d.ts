@@ -45,8 +45,9 @@ function clamp(value: number): number {
 }
 
 /**
- * One Live2D model on one canvas. Create it with `Live2D.create`, then `load` a
- * model3.json. The canvas is sized by CSS; the drawing buffer follows it.
+ * One Live2D model on one canvas, owned by `Live2DCanvas`. Apps reach it only
+ * through `Live2DCanvasHandle`, which documents the shared members. The canvas
+ * is sized by CSS; the drawing buffer follows it.
  */
 export class Live2D extends Emitter<Live2DEvents> {
   readonly canvas: HTMLCanvasElement;
@@ -99,7 +100,6 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#frame = requestAnimationFrame(this.#tick);
   }
 
-  /** The loaded model, or null before the first load completes. */
   get model(): ModelInfo | null {
     return this.#model?.info ?? null;
   }
@@ -113,7 +113,6 @@ export class Live2D extends Emitter<Live2DEvents> {
     this.#placement = null;
   }
 
-  /** How open the mouth is, 0 to 1, on top of any voice playing. */
   get mouth(): number {
     return this.#mouth.manual;
   }
@@ -174,15 +173,10 @@ export class Live2D extends Emitter<Live2DEvents> {
     }
   }
 
-  /**
-   * Plays a motion from a group. Resolves true when it finishes, or false if a
-   * motion of equal or higher priority kept it from starting, or it was cut off.
-   */
   motion(group: string, options?: MotionOptions): Promise<boolean> {
     return this.#require().startMotion(group, options);
   }
 
-  /** Sets an expression by name, a random one when called with no name, or clears it with null. */
   expression(name?: string | null): void {
     const model = this.#require();
     if (name === undefined) {
@@ -193,19 +187,16 @@ export class Live2D extends Emitter<Live2DEvents> {
     model.setExpression(name);
   }
 
-  /** Holds a parameter at a value over motions and effects, or releases it with null. */
   setParameter(id: string, value: number | null): void {
     this.#require().setParameter(id, value);
   }
 
-  /** The model's hit areas under a point in viewport coordinates, such as a pointer event's clientX and clientY. */
   hitTest(clientX: number, clientY: number): string[] {
     const model = this.#require();
     const bounds = this.canvas.getBoundingClientRect();
     return model.hitAreasAt(...this.#place().toModel(clientX - bounds.left, clientY - bounds.top));
   }
 
-  /** Turns the model toward a point in viewport coordinates, or back to the front with null. */
   lookAt(clientX: number | null, clientY?: number): void {
     const model = this.#model;
     if (!model) return;
@@ -220,16 +211,11 @@ export class Live2D extends Emitter<Live2DEvents> {
     model.look(clamp(x / (rect.width / 2)), clamp(-y / (rect.height / 2)));
   }
 
-  /**
-   * Plays a voice (a URL or a media element) or listens to a stream, and moves
-   * the lips with it. Resolves when it ends, is stopped, or another voice starts.
-   */
   speak(voice: Voice, options: { signal?: AbortSignal } = {}): Promise<void> {
     this.#assertAlive();
     return this.#mouth.speak(voice, options.signal);
   }
 
-  /** Stops the voice started by `speak`. */
   hush(): void {
     this.#mouth.stop();
   }

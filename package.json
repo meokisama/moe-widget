@@ -1,7 +1,7 @@
 {
   "name": "moe-widget",
   "version": "0.1.0",
-  "description": "Live2D Cubism models on the web, with React bindings.",
+  "description": "Adorable Live2D characters that live on your web pages.",
   "keywords": [
     "live2d",
     "cubism",
@@ -18,10 +18,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./react": {
-      "types": "./dist/react.d.ts",
-      "default": "./dist/react.js"
     },
     "./package.json": "./package.json"
   },
@@ -41,11 +37,6 @@
   },
   "peerDependencies": {
     "react": ">=18"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",

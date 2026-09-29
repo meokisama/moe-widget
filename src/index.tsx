@@ -1,21 +1,28 @@
 "use client";
 
 import { type CSSProperties, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { type Live2DCanvasHandle, handleOf } from "./handle";
 import { Live2D } from "./live2d";
 import type { Layout, Live2DOptions, ModelInfo, MotionEvent, TapEvent } from "./types";
+
+export type { Live2DCanvasHandle } from "./handle";
+export type { Voice } from "./mouth";
+export type { Layout, ModelInfo, MotionEvent, MotionOptions, Priority, TapEvent } from "./types";
 
 export type Live2DCanvasProps = Live2DOptions & {
   /** URL of the model3.json. Changing it loads the new model over the old one. */
   model: string;
   className?: string;
   style?: CSSProperties;
-  /** Called when the Live2D instance is ready, before the first model loads. */
-  onReady?: (live2d: Live2D) => void;
-  onLoad?: (model: ModelInfo, live2d: Live2D) => void;
+  /** Called when the canvas is ready, before the first model loads. */
+  onReady?: (live2d: Live2DCanvasHandle) => void;
+  onLoad?: (model: ModelInfo, live2d: Live2DCanvasHandle) => void;
   onError?: (error: unknown) => void;
-  onTap?: (event: TapEvent, live2d: Live2D) => void;
+  onTap?: (event: TapEvent, live2d: Live2DCanvasHandle) => void;
   onMotionStart?: (event: MotionEvent) => void;
   onMotionEnd?: (event: MotionEvent) => void;
+  /** A user event fired from a motion's timeline. */
+  onMotionEvent?: (value: string) => void;
 };
 
 const FILL: CSSProperties = { display: "block", width: "100%", height: "100%" };
@@ -26,9 +33,9 @@ function isAbort(error: unknown): boolean {
 
 /**
  * A canvas showing a Live2D model. It fills its parent by default, so give the
- * parent a size. The ref is the `Live2D` instance, null until it is ready.
+ * parent a size. The ref is a `Live2DCanvasHandle`, null until it is ready.
  */
-export const Live2DCanvas = forwardRef<Live2D | null, Live2DCanvasProps>(function Live2DCanvas(props, ref) {
+export const Live2DCanvas = forwardRef<Live2DCanvasHandle | null, Live2DCanvasProps>(function Live2DCanvas(props, ref) {
   const { model, layout, follow, idle, pixelRatio, debug, className, style } = props;
   const canvas = useRef<HTMLCanvasElement>(null);
   const [live2d, setLive2D] = useState<Live2D | null>(null);
@@ -36,7 +43,7 @@ export const Live2DCanvas = forwardRef<Live2D | null, Live2DCanvasProps>(functio
   const handlers = useRef(props);
   handlers.current = props;
 
-  useImperativeHandle(ref, () => live2d as Live2D, [live2d]);
+  useImperativeHandle(ref, () => (live2d ? handleOf(live2d) : null) as Live2DCanvasHandle, [live2d]);
 
   // These options are fixed for an instance's lifetime, so a change makes a new one.
   useEffect(() => {
@@ -54,11 +61,13 @@ export const Live2DCanvas = forwardRef<Live2D | null, Live2DCanvasProps>(functio
       (created) => {
         if (cancelled) return created.destroy();
         instance = created;
-        created.on("tap", (event) => handlers.current.onTap?.(event, created));
+        const handle = handleOf(created);
+        created.on("tap", (event) => handlers.current.onTap?.(event, handle));
         created.on("motionstart", (event) => handlers.current.onMotionStart?.(event));
         created.on("motionend", (event) => handlers.current.onMotionEnd?.(event));
+        created.on("motionevent", (value) => handlers.current.onMotionEvent?.(value));
         setLive2D(created);
-        handlers.current.onReady?.(created);
+        handlers.current.onReady?.(handle);
       },
       (error: unknown) => handlers.current.onError?.(error),
     );
@@ -79,7 +88,7 @@ export const Live2DCanvas = forwardRef<Live2D | null, Live2DCanvasProps>(functio
     if (!live2d) return;
     const controller = new AbortController();
     live2d.load(model, { signal: controller.signal, layout: JSON.parse(layoutKey) as Layout }).then(
-      (info) => handlers.current.onLoad?.(info, live2d),
+      (info) => handlers.current.onLoad?.(info, handleOf(live2d)),
       (error: unknown) => {
         if (!isAbort(error)) handlers.current.onError?.(error);
       },

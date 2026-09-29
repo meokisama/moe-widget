@@ -13,8 +13,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "moe-widget": ["./src/index.ts"],
-      "moe-widget/react": ["./src/react.tsx"]
+      "moe-widget": ["./src/index.tsx"]
     }
   },
   "include": ["src", "test", "cubism", "playground", "*.config.ts"]
