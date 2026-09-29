@@ -12,6 +12,10 @@
   ],
   "license": "MIT",
   "author": "Meoki",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meokisama/moe-widget.git"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

@@ -12,10 +12,7 @@
 
 </div>
 
-<!--
-  Demo GIF goes here, for example:
-  <p align="center"><img src="./assets/demo.gif" alt="moe-widget demo" width="720" /></p>
--->
+<p align="center"><img src="./assets/demo.gif" alt="Mao, Zundamon and Roro following the pointer, reacting to taps and zooming in the playground" width="560" /></p>
 
 ## Features
 
@@ -48,127 +45,13 @@ export function Mascot() {
 }
 ```
 
-> The canvas fills its parent, so give the parent a size. The drawing buffer follows it, including on high-DPI screens.
-> Model files are fetched relative to the model3.json, so serve the model's folder as it is, for example from `public/`.
+The canvas fills its parent, so give the parent a size. With only a model, it idles, follows the pointer and reacts to taps.
 
-The model idles, follows the pointer, and reacts to taps: a hit area named like "head" changes the expression, anywhere else plays a motion. Pass `onTap` to react your own way. Motion groups, expressions and hit areas are named by each model's author, so read them from `onLoad(model)` rather than guessing.
+## Documentation
 
-Changing `model` loads the new model over the old one. The old one stays on screen until the new one is ready.
-
-## Controlling the model
-
-The `ref` is a `Live2DCanvasHandle`, `null` until a model has loaded. Use it to play motions, change expressions, speak, and the rest.
-
-```tsx
-import { useRef } from "react";
-import { Live2DCanvas, type Live2DCanvasHandle } from "moe-widget";
-
-export function Mascot() {
-  const live2d = useRef<Live2DCanvasHandle>(null);
-
-  return (
-    <>
-      <div style={{ width: 300, height: 400 }}>
-        <Live2DCanvas ref={live2d} model="/models/mao/Mao.model3.json" />
-      </div>
-      <button onClick={() => live2d.current?.motion("TapBody")}>Wave</button>
-      <button onClick={() => live2d.current?.expression()}>Surprise me</button>
-    </>
-  );
-}
-```
-
-### Lip sync
-
-```tsx
-// A URL or a media element. Resolves when the voice ends.
-await live2d.current?.speak("/voice/hello.mp3");
-
-// Or a MediaStream, such as the microphone.
-const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-live2d.current?.speak(mic);
-
-live2d.current?.hush();
-```
-
-## Layout
-
-Choose the part of the model to show and how to fit it:
-
-```tsx
-<Live2DCanvas
-  model="/models/mao/Mao.model3.json"
-  layout={{
-    frame: [0, 0, 1, 0.6], // the upper 60% of the model's canvas: [left, top, width, height]
-    fit: "contain", // or "cover", "width", "height"
-    align: [0.5, 1], // bottom center of the leftover space
-    scale: 1,
-    offset: [0, 0], // CSS pixels
-  }}
-/>
-```
-
-Every value is relative, so the same layout works for any size. Changing `layout` moves the model without reloading it.
-
-## API
-
-### `<Live2DCanvas>` props
-
-| Prop                                                               | Default                    |                                                                                                                 |
-| ------------------------------------------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `model`                                                            |                            | URL of the model3.json. Required.                                                                               |
-| `layout`                                                           | `{}`                       | See [Layout](#layout).                                                                                          |
-| `follow`                                                           | `"window"`                 | What the eyes follow: the pointer anywhere, `"canvas"` only over it, or `false`.                                |
-| `idle`                                                             | `"idle"`                   | The motion group played when nothing else is, in any case, or `false`.                                          |
-| `pixelRatio`                                                       | `min(devicePixelRatio, 2)` | Drawing-buffer pixels per CSS pixel.                                                                            |
-| `debug`                                                            | `false`                    | Logs Cubism's messages.                                                                                         |
-| `className`, `style`                                               |                            | Passed to the canvas.                                                                                           |
-| `onLoad(model, live2d)`                                            |                            | A model finished loading. `model` lists its motion groups, expressions, hit areas, parameters and size.         |
-| `onError(error)`                                                   |                            | Loading failed.                                                                                                 |
-| `onTap(event, live2d)`                                             | the reaction above         | The canvas was tapped. `event` has `x`, `y` (CSS pixels from the top left), `hitAreas`, and the `PointerEvent`. |
-| `onMotionStart({ group, index })`, `onMotionEnd({ group, index })` |                            | A motion started or ended.                                                                                      |
-| `onMotionEvent(value)`                                             |                            | A user event fired from a motion's timeline.                                                                    |
-
-The callbacks get the same handle as the `ref`. Changing `pixelRatio` or `debug` restarts the canvas.
-
-### `Live2DCanvasHandle`
-
-| Member                                     |                                                                                                                                                                                      |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `motion(group, { index?, priority? })`     | Resolves `true` when the motion ends, `false` if it could not start or was cut off. The group matches in any case. The priority is `"idle"`, `"normal"` (the default), or `"force"`. |
-| `expression(name?)`                        | Sets an expression. With no name it picks a random one, and `null` clears it.                                                                                                        |
-| `speak(voice, { signal? })`                | Moves the lips with a URL, a media element, or a `MediaStream`.                                                                                                                      |
-| `hush()`                                   | Stops the voice.                                                                                                                                                                     |
-| `mouth`                                    | How open the mouth is, from 0 to 1.                                                                                                                                                  |
-| `lookAt(clientX, clientY)`, `lookAt(null)` | Turns the head toward a point, or back to the front.                                                                                                                                 |
-| `hitTest(clientX, clientY)`                | The hit areas under a point.                                                                                                                                                         |
-| `setParameter(id, value)`                  | Holds a parameter at a value over motions. Pass `null` to release it.                                                                                                                |
-| `model`                                    | Information about the model on screen.                                                                                                                                               |
-| `canvas`                                   | The canvas element.                                                                                                                                                                  |
-
-## Development
-
-```sh
-npm install
-npm run dev              # playground at http://localhost:5173 with sample models
-npm run build:playground # static build of the playground in playground/dist, ready to deploy
-npm run check            # types
-npm test
-npm run build
-```
-
-`cubism/` holds the Live2D SDK and is generated. To move to a newer SDK, run `npm run sync-cubism -- <version>`, for example `5-r.6`. The script downloads the official release, applies the patches listed in `scripts/sync-cubism.mjs`, and fails loudly if one no longer fits.
-
-<details>
-<summary><b>Releasing</b></summary>
-
-```sh
-npm run changeset    # describe the change and pick patch, minor or major
-npx changeset version
-npm run release      # checks, tests, builds and publishes to npm
-```
-
-</details>
+- [Guide](./docs/guide.md): controlling the model, taps, lip sync, layout, server rendering.
+- [API](./docs/api.md): every prop, the handle, and the exported types.
+- [Architecture](./docs/architecture.md): how the library is built, and how to work on it.
 
 ## License
 
