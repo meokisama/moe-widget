@@ -2,10 +2,11 @@ import { type CSSProperties, type ReactNode, type RefObject, StrictMode, useEffe
 import { createRoot } from "react-dom/client";
 import { type Layout, Live2DCanvas, type Live2DCanvasHandle, type Live2DCanvasProps, type ModelInfo } from "moe-widget";
 
+// Relative, so the build works under any path, such as GitHub Pages' /moe-widget/.
 const MODELS = {
-  Mao: "/mao/Mao.model3.json",
-  Zundamon: "/zundamon/zundamon.model3.json",
-  Roro: "/roro/roro.model3.json",
+  Mao: "./mao/Mao.model3.json",
+  Zundamon: "./zundamon/zundamon.model3.json",
+  Roro: "./roro/roro.model3.json",
 };
 
 type ModelName = keyof typeof MODELS;

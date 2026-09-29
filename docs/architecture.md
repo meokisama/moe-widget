@@ -92,10 +92,14 @@ npm run build
 
 Tests run in Vitest without WebGL, so they cover the pure parts: `layout`, `emitter`, `handle`, `tap`, and the types.
 
+Every push to `master` runs `ci.yml` and deploys the playground to GitHub Pages (`playground.yml`).
+
 ### Releasing
 
 ```sh
-npm run changeset    # describe the change and pick patch, minor or major
-npx changeset version
-npm run release      # checks, tests, builds and publishes to npm
+npm run release:patch   # or release:minor, release:major
 ```
+
+On a clean tree, this checks, tests and builds, bumps the version, commits `chore: release x.y.z`, tags `vx.y.z` and pushes both. The tag runs `release.yml`, which checks the tag against `package.json`, publishes to npm with provenance, and opens a GitHub release with generated notes.
+
+npm authenticates the workflow by [trusted publishing](https://docs.npmjs.com/trusted-publishers), so the repository holds no npm token. Trusted publishing is set on the package's npm settings, so the first version is published by hand.

@@ -2,29 +2,32 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    tags: ["v*"]
 
 permissions:
   contents: write
-  pull-requests: write
+  # npm trusted publishing: no token, and provenance comes with it.
   id-token: write
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # Trusted publishing needs npm 11.5.1 or newer.
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
+      - name: Tag matches package.json
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
       - run: npm ci
-      # Opens a "Version packages" pull request from pending changesets; merging it publishes.
-      - uses: changesets/action@v1
-        with:
-          publish: npm run release
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: npm publish --access public
+      - name: GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+          GH_TOKEN: ${{ github.token }}
