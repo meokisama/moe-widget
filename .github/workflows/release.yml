@@ -20,12 +20,15 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: Tag matches package.json
         run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      # Before publishing, so a release without notes never reaches npm.
+      - name: Release notes
+        run: node scripts/changelog.mjs notes "${GITHUB_REF_NAME#v}" > "$RUNNER_TEMP/notes.md"
       - run: npm install
       - run: npm run check
       - run: npm test
       - run: npm run build
       - run: npm publish --access public
       - name: GitHub release
-        run: gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: gh release create "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
