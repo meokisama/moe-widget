@@ -26,7 +26,7 @@ export const CubismLogPrintIn = (level: LogLevel, fmt: string, args: any[]) => {
 };
 
 export const CSM_ASSERT = (expr: any) => {
-  console.assert(expr);
+  if (!expr) console.assert(expr);
 };
 
 export let CubismLogVerbose: (fmt: string, ...args: any[]) => void;

@@ -36,6 +36,9 @@ const PATCHES = {
       "  public removeGlContext(gl: WebGLRenderingContext): void {\n    this._shaderMap.get(gl)?.release();\n    this._shaderMap.delete(gl);\n  }\n\n  public getShader(gl: WebGLRenderingContext): CubismShader_WebGL {",
     ],
   ],
+  // Called per parameter per frame; even a passing console.assert reaches whatever wraps
+  // console, and Next's dev log forwarding then floods its server.
+  "utils/cubismdebug.ts": [["  console.assert(expr);", "  if (!expr) console.assert(expr);"]],
 };
 
 function patch(path, source) {

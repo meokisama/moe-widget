@@ -12,6 +12,7 @@ The Cubism Web Framework (bundled in the `model` chunk) is under the [Live2D Ope
 
 - The WebGL shaders are inlined instead of fetched from a directory.
 - `CubismShaderManager_WebGL.removeGlContext` releases the shaders of one WebGL context.
+- `CSM_ASSERT` calls `console.assert` only when its check fails.
 
 ## Cubism SDK Release License
 

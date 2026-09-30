@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- The Cubism Framework no longer calls `console.assert` for every passing check, many times a frame. Tools that forward the console, like the Next.js dev server, were flooded by it.
+
 ## 0.3.0
 
 ### Added
