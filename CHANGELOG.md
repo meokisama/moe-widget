@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0
+
 ### Added
 
 - `motion()` takes an array of groups and picks among all their motions alike.
