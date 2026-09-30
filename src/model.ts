@@ -130,7 +130,9 @@ export class Model extends CubismUserModel {
   #motions = new Map<string, Promise<CubismMotion | null>>();
   #ready = new Map<string, CubismMotion>();
   #pending = new Map<CubismMotion, Array<(finished: boolean) => void>>();
-  #last = new Map<string, number>();
+  // When each motion last started, so a pick can step over the latest one of its pool.
+  #played = new Map<string, number>();
+  #plays = 0;
   #expressions = new Map<string, ACubismMotion>();
   #overrides = new Map<string, number>();
   #images: ImageBitmap[] = [];
@@ -306,6 +308,8 @@ export class Model extends CubismUserModel {
 
     this.#uploadTextures();
     this.resize(setup.width, setup.height);
+    // Vertices and visibility are only filled in by an update; drawn() may be read before the first frame.
+    this._model.update();
 
     const canvas = this._model.getModel().canvasinfo;
     const unit = canvas.PixelsPerUnit;
@@ -435,12 +439,27 @@ export class Model extends CubismUserModel {
     return loading;
   }
 
-  #pick(group: string, count: number): number {
-    const last = this.#last.get(group);
-    if (count === 1 || last === undefined) return Math.floor(Math.random() * count);
-    // Draw from the other count - 1 and step over the last one.
-    const next = Math.floor(Math.random() * (count - 1));
-    return next >= last ? next + 1 : next;
+  /** A motion of the pool at random, never the one of them that played last. */
+  #pick(pool: readonly (readonly [string, number])[]): readonly [string, number] {
+    let last = -1;
+    let latest = 0;
+    pool.forEach(([group, index], n) => {
+      const played = this.#played.get(`${group}\u0000${index}`) ?? 0;
+      if (played > latest) [last, latest] = [n, played];
+    });
+    if (pool.length === 1 || last < 0) return pool[Math.floor(Math.random() * pool.length)]!;
+    // Draw from the other n - 1 and step over the last one.
+    const next = Math.floor(Math.random() * (pool.length - 1));
+    return pool[next >= last ? next + 1 : next]!;
+  }
+
+  #pool(group: string): [string, number][] {
+    return Array.from({ length: this.#setting.getMotionCount(group) }, (_, index) => [group, index]);
+  }
+
+  #start(motion: CubismMotion, group: string, index: number, priority: number): number {
+    this.#played.set(`${group}\u0000${index}`, ++this.#plays);
+    return this._motionManager.startMotionPriority(motion, false, priority);
   }
 
   /** The group as the model spells it: an exact match, or else one in any case. */
@@ -463,12 +482,19 @@ export class Model extends CubismUserModel {
   }
 
   /** Plays a motion. Resolves true once it finishes, false if it could not start. */
-  async startMotion(name: string, options: MotionOptions = {}): Promise<boolean> {
-    const group = this.#group(name);
-    const count = group === undefined ? 0 : this.#setting.getMotionCount(group);
-    if (group === undefined || count === 0) throw new RangeError(`moe2d: the model has no motion group "${name}"`);
-    const index = options.index ?? this.#pick(group, count);
-    if (index < 0 || index >= count) throw new RangeError(`moe2d: "${group}" has no motion ${index}`);
+  async startMotion(names: string | readonly string[], options: MotionOptions = {}): Promise<boolean> {
+    const pool = (typeof names === "string" ? [names] : names).flatMap((name) => {
+      const group = this.#group(name);
+      const motions = group === undefined ? [] : this.#pool(group);
+      if (motions.length === 0) throw new RangeError(`moe2d: the model has no motion group "${name}"`);
+      return motions;
+    });
+    if (pool.length === 0) throw new RangeError("moe2d: motion() needs at least one group");
+    if (options.index !== undefined && typeof names !== "string" && names.length > 1) {
+      throw new RangeError("moe2d: an index needs a single group");
+    }
+    const [group, index] = options.index === undefined ? this.#pick(pool) : [pool[0]![0], options.index];
+    if (index < 0 || index >= this.#setting.getMotionCount(group)) throw new RangeError(`moe2d: "${group}" has no motion ${index}`);
     const priority = PRIORITY[options.priority ?? "normal"];
 
     const manager = this._motionManager;
@@ -488,9 +514,8 @@ export class Model extends CubismUserModel {
       return false;
     }
 
-    this.#last.set(group, index);
     return new Promise<boolean>((resolve) => {
-      const handle = manager.startMotionPriority(motion, false, priority);
+      const handle = this.#start(motion, group, index, priority);
       if (handle === InvalidMotionQueueEntryHandleValue) return resolve(false);
       const waiting = this.#pending.get(motion) ?? [];
       waiting.push(resolve);
@@ -501,12 +526,9 @@ export class Model extends CubismUserModel {
   #startIdle(): void {
     const group = this.#idle;
     if (!group) return;
-    const count = this.#setting.getMotionCount(group);
-    const index = this.#pick(group, count);
+    const [, index] = this.#pick(this.#pool(group));
     const motion = this.#ready.get(`${group}\u0000${index}`);
-    if (!motion) return;
-    this.#last.set(group, index);
-    this._motionManager.startMotionPriority(motion, false, PRIORITY.idle);
+    if (motion) this.#start(motion, group, index, PRIORITY.idle);
   }
 
   setExpression(name: string | null): void {
@@ -538,6 +560,23 @@ export class Model extends CubismUserModel {
       if (this.isHit(setting.getHitAreaId(i), x, y)) hits.push(setting.getHitAreaName(i));
     }
     return hits;
+  }
+
+  /** The box around every drawable showing in the last update, in model units, or null if none shows. */
+  drawn(): Bounds | null {
+    const model = this._model;
+    let [left, right, bottom, top] = [Infinity, -Infinity, Infinity, -Infinity];
+    for (let i = 0; i < model.getDrawableCount(); i++) {
+      if (!model.getDrawableDynamicFlagIsVisible(i) || model.getDrawableOpacity(i) <= 0) continue;
+      const vertices = model.getDrawableVertices(i);
+      for (let v = 0; v < vertices.length; v += 2) {
+        left = Math.min(left, vertices[v]!);
+        right = Math.max(right, vertices[v]!);
+        bottom = Math.min(bottom, vertices[v + 1]!);
+        top = Math.max(top, vertices[v + 1]!);
+      }
+    }
+    return left > right ? null : { left, top, width: right - left, height: top - bottom };
   }
 
   override motionEventFired(value: string): void {

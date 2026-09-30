@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Live2DCanvasHandle } from "../src/handle";
 import { reactToTap } from "../src/tap";
 
@@ -16,16 +16,11 @@ function fake(model: { motions: Record<string, string[]>; expressions: string[] 
   return live2d as typeof live2d & Live2DCanvasHandle;
 }
 
-function playedFor(model: Parameters<typeof fake>[0], idle: string | false | undefined, random: number) {
-  vi.spyOn(Math, "random").mockReturnValue(random);
+function playedFor(model: Parameters<typeof fake>[0], idle: string | false | undefined) {
   const live2d = fake(model);
   reactToTap(live2d, [], idle);
   return live2d.motion.mock.calls[0]?.[0];
 }
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("reactToTap", () => {
   it("changes the expression on a head", () => {
@@ -44,34 +39,34 @@ describe("reactToTap", () => {
   it("plays the tap group anywhere else", () => {
     const live2d = fake(MAO);
     reactToTap(live2d, ["Body"], undefined);
-    expect(live2d.motion).toHaveBeenCalledWith("TapBody");
+    expect(live2d.motion).toHaveBeenCalledWith(["TapBody"]);
     expect(live2d.expression).not.toHaveBeenCalled();
   });
 
   it("plays a motion on a head when the model has no expressions", () => {
     const live2d = fake({ ...MAO, expressions: [] });
     reactToTap(live2d, ["Head"], undefined);
-    expect(live2d.motion).toHaveBeenCalledWith("TapBody");
+    expect(live2d.motion).toHaveBeenCalledWith(["TapBody"]);
   });
 
   it("picks from every group when none is named like tap", () => {
-    expect(playedFor(ZUNDAMON, undefined, 0)).toBe("Wave");
-    expect(playedFor(ZUNDAMON, undefined, 0.99)).toBe("Think");
+    expect(playedFor(ZUNDAMON, undefined)).toEqual(["Wave", "Laugh", "Point", "Think"]);
   });
 
   it("never picks the idle group", () => {
-    const played = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((random) => playedFor(RORO, undefined, random)));
-    expect(played).toEqual(new Set(["Emotion", "Note", "SectionClear", "Song"]));
+    expect(playedFor(RORO, undefined)).toEqual(["Emotion", "Note", "SectionClear", "Song"]);
   });
 
   it("leaves out the group named by the idle prop instead, in any case", () => {
-    const played = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((random) => playedFor(RORO, "emotion", random)));
-    expect(played).not.toContain("Emotion");
-    expect(played).toContain("Idle");
+    expect(playedFor(RORO, "emotion")).toEqual(["Idle", "Note", "SectionClear", "Song"]);
   });
 
   it("can pick a group named idle when idling is off", () => {
-    expect(playedFor(RORO, false, 0.2)).toBe("Idle");
+    expect(playedFor(RORO, false)).toContain("Idle");
+  });
+
+  it("skips empty groups", () => {
+    expect(playedFor({ motions: { Idle: motions(1), Empty: [], Wave: motions(2) }, expressions: [] }, undefined)).toEqual(["Wave"]);
   });
 
   it("does nothing for a model with no motions or expressions", () => {

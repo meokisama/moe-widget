@@ -42,4 +42,17 @@ describe("place", () => {
     expect(((cx + 1) / 2) * view.width).toBeCloseTo(200);
     expect(((1 - cy) / 2) * view.height).toBeCloseTo(100);
   });
+
+  it("maps model units back to the canvas", () => {
+    const { toModel, toCanvas } = place({ width: 320, height: 240 }, bounds, { frame: [0.1, 0.2, 0.5, 0.3], fit: "cover" });
+    const [x, y] = toCanvas(...toModel(200, 100));
+    expect(x).toBeCloseTo(200);
+    expect(y).toBeCloseTo(100);
+  });
+
+  it("puts the frame's corners on the rect's", () => {
+    const { toCanvas } = place({ width: 600, height: 300 }, bounds, { frame: [0, 0, 1, 0.5], align: [0.5, 1] });
+    expect(toCanvas(-1, 2)).toEqual([150, 0]);
+    expect(toCanvas(1, 0)).toEqual([450, 300]);
+  });
 });

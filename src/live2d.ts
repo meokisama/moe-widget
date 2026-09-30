@@ -1,5 +1,5 @@
 import { Emitter } from "./emitter";
-import { type Placement, place } from "./layout";
+import { type Placement, type Rect, place } from "./layout";
 import { Mouth, type Voice } from "./mouth";
 import type { Layout, Live2DEvents, Live2DOptions, LoadOptions, ModelInfo, MotionOptions } from "./types";
 import type { Model } from "./model";
@@ -235,8 +235,16 @@ export class Live2D extends Emitter<Live2DEvents> {
     }
   }
 
-  motion(group: string, options?: MotionOptions): Promise<boolean> {
-    return this.#require().startMotion(group, options);
+  motion(groups: string | readonly string[], options?: MotionOptions): Promise<boolean> {
+    return this.#require().startMotion(groups, options);
+  }
+
+  bounds(): Rect | null {
+    const drawn = this.#require().drawn();
+    if (!drawn) return null;
+    const [x, y] = this.#place().toCanvas(drawn.left, drawn.top);
+    const [right, bottom] = this.#place().toCanvas(drawn.left + drawn.width, drawn.top - drawn.height);
+    return { x, y, width: right - x, height: bottom - y };
   }
 
   expression(name?: string | null): void {

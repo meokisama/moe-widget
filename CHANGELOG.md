@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- `motion()` takes an array of groups and picks among all their motions alike.
+- `bounds()` on the handle gives the box around what the model drew, in CSS pixels from the canvas's top left, to place a speech bubble or a label over it.
+
+### Changed
+
+- The default tap reaction picks among the motions of every group named like "tap", or else of every group but the idle one, each motion as likely. It used to pick a group first.
+
 ## 0.2.0
 
 ### Changed

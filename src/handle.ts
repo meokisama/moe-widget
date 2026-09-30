@@ -1,3 +1,4 @@
+import type { Rect } from "./layout";
 import type { Live2D } from "./live2d";
 import type { Voice } from "./mouth";
 import type { ModelInfo, MotionOptions } from "./types";
@@ -14,10 +15,15 @@ export type Live2DCanvasHandle = {
   /** How open the mouth is, 0 to 1, on top of any voice playing. */
   mouth: number;
   /**
-   * Plays a motion from a group, matched in any case. Resolves true when it finishes,
-   * or false if a motion of equal or higher priority kept it from starting, or it was cut off.
+   * Plays a motion from a group, or from any of several, matched in any case. Resolves true when
+   * it finishes, or false if a motion of equal or higher priority kept it from starting, or it was cut off.
    */
-  motion(group: string, options?: MotionOptions): Promise<boolean>;
+  motion(groups: string | readonly string[], options?: MotionOptions): Promise<boolean>;
+  /**
+   * The box around what the model drew in its last frame, in CSS pixels from the canvas's
+   * top left. It reaches past the canvas where the layout crops. Null when nothing shows.
+   */
+  bounds(): Rect | null;
   /** Sets an expression by name, a random one when called with no name, or clears it with null. */
   expression(name?: string | null): void;
   /** Holds a parameter at a value over motions and effects, or releases it with null. */
@@ -52,7 +58,8 @@ export function handleOf(live2d: Live2D): Live2DCanvasHandle {
       set mouth(value: number) {
         live2d.mouth = value;
       },
-      motion: (group, options) => live2d.motion(group, options),
+      motion: (groups, options) => live2d.motion(groups, options),
+      bounds: () => live2d.bounds(),
       expression: (name) => live2d.expression(name),
       setParameter: (id, value) => live2d.setParameter(id, value),
       hitTest: (clientX, clientY) => live2d.hitTest(clientX, clientY),

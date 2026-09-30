@@ -306,6 +306,19 @@ Each model's author draws on a canvas of their own size and places the character
 
 The eyes follow the pointer over the whole page by default, so a corner mascot looks at whatever the user is doing.
 
+### Where the model is drawn
+
+`bounds()` gives the box around what the model drew in its last frame, in CSS pixels from the canvas's top left. It follows the layout, so something placed from it holds when `frame` changes. A speech bubble over the head, in a parent the size of the canvas:
+
+```tsx
+onLoad={(_, live2d) => {
+  const drawn = live2d.bounds();
+  if (drawn) setBubbleBottom(canvasHeight - Math.max(0, drawn.y));
+}}
+```
+
+The box moves with the motions, so read it when you need it rather than once for good. `y` is negative when the layout crops the top of the model.
+
 ## Knowing what a model has
 
 Motion groups, expressions, hit areas and parameters are named by each model's author, and vary between models. Read them from the [`ModelInfo`](./api.md#modelinfo) that `onLoad` passes, or from `live2d.model` on the handle, instead of guessing:
@@ -352,9 +365,11 @@ Every callback (`onLoad`, `onTap`) also gets the same handle as its last argumen
 live2d.motion("TapBody");                        // a random motion of the group
 live2d.motion("TapBody", { index: 0 });          // the first one
 live2d.motion("TapBody", { priority: "force" }); // interrupt whatever plays
+live2d.motion(["Wave", "Laugh", "Point"]);       // any motion of these groups
 ```
 
 - The group matches in any case. With no `index`, it picks at random, avoiding the one played last.
+- With several groups, every motion in them is as likely, whatever the size of its group. An `index` needs a single group.
 - A motion loads the first time it plays. After that it starts at once.
 - An unknown group, or an index past the end, rejects with a `RangeError`.
 
@@ -442,7 +457,7 @@ A tap is a press and release that moves less than 10 px. A drag fires no tap.
 With no `onTap`:
 
 - a tap on a hit area whose name contains "head" sets a random expression, if the model has any,
-- any other tap plays a motion from a group whose name contains "tap", or from a random group other than the idle one.
+- any other tap plays a motion from the groups whose name contains "tap", or else from every group other than the idle one.
 
 Mao has a `Head` hit area and a `TapBody` group, so its head changes expressions and its body waves.
 

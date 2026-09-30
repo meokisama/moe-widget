@@ -9,6 +9,7 @@ function fake() {
     mouth: 0,
     motion: vi.fn(async () => true),
     expression: vi.fn(),
+    bounds: vi.fn(() => ({ x: 1, y: 2, width: 3, height: 4 })),
     load: vi.fn(),
     destroy: vi.fn(),
   };
@@ -25,6 +26,9 @@ describe("handleOf", () => {
     const handle = handleOf(live2d as unknown as Live2D);
     await expect(handle.motion("TapBody", { priority: "force" })).resolves.toBe(true);
     expect(live2d.motion).toHaveBeenCalledWith("TapBody", { priority: "force" });
+    await handle.motion(["Wave", "Laugh"]);
+    expect(live2d.motion).toHaveBeenLastCalledWith(["Wave", "Laugh"], undefined);
+    expect(handle.bounds()).toEqual({ x: 1, y: 2, width: 3, height: 4 });
     handle.mouth = 0.5;
     expect(live2d.mouth).toBe(0.5);
     live2d.mouth = 0.25;

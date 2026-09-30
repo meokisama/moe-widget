@@ -7,6 +7,7 @@ import { reactToTap } from "./tap";
 import type { Fetch, Layout, Live2DOptions, LoadProgress, ModelInfo, MotionEvent, TapEvent } from "./types";
 
 export type { Live2DCanvasHandle } from "./handle";
+export type { Rect } from "./layout";
 export type { Voice } from "./mouth";
 export type { Fetch, Layout, LoadProgress, ModelInfo, MotionEvent, MotionOptions, Priority, TapEvent } from "./types";
 

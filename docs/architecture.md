@@ -60,6 +60,8 @@ A model without a LipSync group gets `ParamMouthOpenY`, if it has one. Breathing
 3. Updates the model: the motion (or the next idle one), then the Framework's effects (expression, eye blink, breath, look, lip sync from `Mouth.value`, physics, pose), then the parameters held by `setParameter`.
 4. Draws with the matrix from `place()`, cached until the size, layout or model changes. Nothing is drawn until the shaders have compiled.
 
+`bounds()` boxes the vertices of every visible drawable from the last update and maps the box to the canvas through `place().toCanvas`. A load runs one update, so it is valid before the first frame and while the canvas is off screen.
+
 A `ResizeObserver` sets the drawing buffer to the CSS size times `pixelRatio`. A canvas with no CSS size is pinned at its current size, or it would grow every frame.
 
 On `webglcontextlost` the loop stops drawing. On restore the Framework's per-context state is dropped and the model rebuilds its renderer and textures.

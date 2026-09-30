@@ -26,7 +26,7 @@ A motion's sound plays as a voice: it moves the lips, replaces any voice playing
 
 The callbacks get the same handle as the `ref`. Changing `pixelRatio` or `debug` restarts the canvas.
 
-Without `onTap`, a tap on a hit area named like "head" sets a random expression. Anywhere else it plays a motion from a group named like "tap", or from any group but the idle one.
+Without `onTap`, a tap on a hit area named like "head" sets a random expression. Anywhere else it plays a motion from the groups named like "tap", or else from every group but the idle one.
 
 ## `Live2DCanvasHandle`
 
@@ -34,7 +34,8 @@ The `ref`, `null` until a model has loaded. Coordinates are in the viewport, lik
 
 | Member                                     |                                                                                                                                                                                                        |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `motion(group, { index?, priority? })`     | Resolves `true` when the motion ends, `false` if it could not start or was cut off. The group matches in any case. The index is random by default, avoiding the last one played.                       |
+| `motion(group, { index?, priority? })`     | Resolves `true` when the motion ends, `false` if it could not start or was cut off. The group matches in any case. An array of groups picks among all their motions alike, and takes no `index`. By default the motion is random, avoiding the last one of them played. |
+| `bounds()`                                 | A [`Rect`](#others) around what the model drew in its last frame, in CSS pixels from the canvas's top left, or `null` when nothing shows. It reaches past the canvas where the layout crops. |
 | `expression(name?)`                        | Sets an expression. With no name it picks a random one, and `null` clears it.                                                                                                                          |
 | `speak(voice, { signal? })`                | Moves the lips with a [`Voice`](#voice). Resolves when it ends, is stopped, or another voice starts.                                                                                                   |
 | `hush()`                                   | Stops the voice.                                                                                                                                                                                       |
@@ -86,6 +87,7 @@ A press that moves more than 10 px is a drag and fires no tap.
 | `Priority`      | `"idle"` yields to everything, `"normal"` (the default) is refused while a `normal` or `force` motion plays, `"force"` interrupts. |
 | `MotionEvent`   | `{ group, index }`, passed to `onMotionStart` and `onMotionEnd`.                                                      |
 | `Voice`         | A URL, an `HTMLMediaElement`, or a `MediaStream`.                                                                     |
+| `Rect`          | `{ x, y, width, height }`, returned by `bounds`.                                                                      |
 | `LoadProgress`  | `{ loaded, total }`, passed to `onProgress`.                                                                          |
 | `Fetch`         | `(url: URL, init: RequestInit) => Promise<Response>`, the type of the `fetch` prop.                                   |
 | `Live2DCanvasProps` | The props above.                                                                                                  |

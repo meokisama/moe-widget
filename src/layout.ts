@@ -13,6 +13,8 @@ export type Placement = {
   rect: Rect;
   /** Converts a canvas point in CSS pixels to model units. */
   toModel(x: number, y: number): [number, number];
+  /** Converts a point in model units to CSS pixels on the canvas. */
+  toCanvas(u: number, v: number): [number, number];
 };
 
 /**
@@ -62,5 +64,6 @@ export function place(view: { width: number; height: number }, bounds: Bounds, l
     matrix,
     rect: { x, y, width, height },
     toModel: (px, py) => [(px - x) / scale + frame.left, frame.top - (py - y) / scale],
+    toCanvas: (u, v) => [x + (u - frame.left) * scale, y + (frame.top - v) * scale],
   };
 }
