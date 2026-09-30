@@ -16,12 +16,14 @@
 
 ## Features
 
-- **One install, no setup.** The Cubism Core and the WebGL shaders ship inside the package. No script tags, CDN files, or folders to copy.
+- **One install, no setup.** The Cubism Core and the WebGL shaders ship inside the package, and nothing but React is needed. No PixiJS, script tags, CDN files, or folders to copy.
+- **Alive with only a model.** It idles, follows the pointer and reacts to taps: a new expression on the head, a motion anywhere else.
+- **Lip sync.** `speak()` moves the mouth with an audio URL, a media element or a `MediaStream`, so a TTS voice or a microphone works as well as a recording.
+- **UI that sticks to the character.** `bounds()` tells where the model is drawn and `hitTest()` which part is under a point, so a speech bubble can sit on its head.
+- **Layouts that hold at any size.** Choose the part of the model to show and how to fit it, rather than tuning scale and position by eye.
 - **Small until used.** Importing costs a few kilobytes. The Core and the Framework (about 110 kB gzipped) load when the first canvas mounts, as their own chunks. Nothing is drawn while the canvas is off screen.
 - **SSR safe.** Works in Next.js and other server-rendered apps. The component is a client component, and importing on the server touches nothing browser-only.
-- **Honest promises.** A missing or invalid model reaches `onError` instead of hanging. `motion()` resolves when the motion ends.
-- **Safe to unmount.** Any number of canvases can come and go in any order, even while loading. StrictMode works.
-- **Layouts that hold at any size.** Choose the part of the model to show and how to fit it, rather than tuning scale and position by eye.
+- **Robust.** A missing or invalid model reaches `onError` instead of hanging. Any number of canvases can come and go in any order, even while loading, and StrictMode works.
 
 ## Install
 
@@ -45,7 +47,15 @@ export function Mascot() {
 }
 ```
 
-The canvas fills its parent, so give the parent a size. With only a model, it idles, follows the pointer and reacts to taps.
+The canvas fills its parent, so give the parent a size.
+
+## A canvas, not a widget
+
+**Moe2D** draws the model and lets you drive it: motions, expressions, the mouth, where it looks, where it is drawn. It ships no buttons, speech bubbles or panels, so the character fits your site's own design instead of bringing one of its own.
+
+Those parts are a few lines of your own React. [`examples/companion.tsx`](./examples/companion.tsx) is a corner companion with a typed speech bubble and buttons to play a motion, swap the character and hide it. A reading site built from it:
+
+<p align="center"><img src="./assets/companion.gif" alt="A book site with a companion in the corner that greets, moves, answers a tap and swaps from Zundamon to Mao" width="720" /></p>
 
 ## Documentation
 
@@ -55,8 +65,6 @@ The canvas fills its parent, so give the parent a size. With only a model, it id
 
 ## License
 
-The code in `src/` is under the [MIT license](./LICENSE). The package also includes Live2D Cubism components under Live2D's own licenses. See [NOTICE.md](./NOTICE.md).
-
-> Those licenses are free for individuals and small businesses. A business with annual revenue of 10 million JPY or more needs a [Cubism SDK Release License](https://www.live2d.com/en/sdk/license/) to publish content that uses them.
+The code in `src` is under the [MIT license](./LICENSE). The package also includes Live2D Cubism components under Live2D's own licenses. See [NOTICE.md](./NOTICE.md). Those licenses are free for individuals and small businesses. A business with annual revenue of 10 million JPY or more needs a [Cubism SDK Release License](https://www.live2d.com/en/sdk/license/) to publish content that uses them.
 
 Models belong to their authors and follow their own terms.

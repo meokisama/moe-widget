@@ -16,5 +16,5 @@
       "moe2d": ["./src/index.tsx"]
     }
   },
-  "include": ["src", "test", "cubism", "playground", "*.config.ts"]
+  "include": ["src", "test", "cubism", "playground", "examples", "*.config.ts"]
 }
