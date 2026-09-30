@@ -25,41 +25,29 @@
 - **SSR safe.** Works in Next.js and other server-rendered apps. The component is a client component, and importing on the server touches nothing browser-only.
 - **Robust.** A missing or invalid model reaches `onError` instead of hanging. Any number of canvases can come and go in any order, even while loading, and StrictMode works.
 
-## Install
-
-```sh
-npm install moe2d
-```
-
-Needs React 18 or newer.
-
-## Quick start
-
-```tsx
-import { Live2DCanvas } from "moe2d";
-
-export function Mascot() {
-  return (
-    <div style={{ width: 300, height: 400 }}>
-      <Live2DCanvas model="/models/mao/Mao.model3.json" />
-    </div>
-  );
-}
-```
-
-The canvas fills its parent, so give the parent a size.
-
 ## A canvas, not a widget
 
 **Moe2D** draws the model and lets you drive it: motions, expressions, the mouth, where it looks, where it is drawn. It ships no buttons, speech bubbles or panels, so the character fits your site's own design instead of bringing one of its own.
 
 Those parts are a few lines of your own React. [`examples/companion.tsx`](./examples/companion.tsx) is a corner companion with a typed speech bubble and buttons to play a motion, swap the character and hide it. A reading site built from it:
 
-<p align="center"><img src="./assets/companion.gif" alt="A book site with a companion in the corner that greets, moves, answers a tap and swaps from Zundamon to Mao" width="720" /></p>
+<video src="https://github.com/user-attachments/assets/75ff0dc7-5d73-4c1e-b3f3-5ee0c6970ed7" controls width="100%"></video>
+
+## Playground
+
+The [**Playground**](https://moe.meoki.vn) tries a model before you write any code: pick one from the collection, play its motions and expressions, move and zoom it, test lip sync with the microphone, and watch the events it fires.
+
+<p align="center"><img src="./assets/playground1.png" alt="The playground showing Vivian, with panels for the model, layout, motions, expressions, lip sync and events" width="720" /></p>
+
+<p align="center"><img src="./assets/playground2.png" alt="The playground's collection of models, with a search box" width="720" /></p>
+
+It also opens your own model: drop its zip on the page, or use the folder button beside the model picker. Nothing leaves the browser.
+
+A model made for VTube Studio loads without blinking, expressions or motions, since its `.model3.json` leaves out what VTube Studio keeps in its own files. The playground fills that in on import and offers the fixed zip to download, ready to serve with **Moe2D**. See [**Models made for VTube Studio**](./docs/guide.md#models-made-for-vtube-studio).
 
 ## Documentation
 
-- [Guide](./docs/guide.md): controlling the model, taps, lip sync, layout, server rendering.
+- [Guide](./docs/guide.md): installing and a first model, controlling the model, taps, lip sync, layout, server rendering.
 - [API](./docs/api.md): every prop, the handle, and the exported types.
 - [Architecture](./docs/architecture.md): how the library is built, and how to work on it.
 

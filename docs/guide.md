@@ -25,6 +25,8 @@ The examples use Mao, one of [Live2D's sample models](https://www.live2d.com/en/
 npm install moe2d
 ```
 
+It needs React 18 or newer.
+
 ```tsx
 import { Live2DCanvas } from "moe2d";
 
