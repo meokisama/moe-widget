@@ -25,6 +25,20 @@
 - **SSR safe.** Works in Next.js and other server-rendered apps. The component is a client component, and importing on the server touches nothing browser-only.
 - **Robust.** A missing or invalid model reaches `onError` instead of hanging. Any number of canvases can come and go in any order, even while loading, and StrictMode works.
 
+## Install
+
+[![npm](https://img.shields.io/npm/v/moe2d?style=flat-square&color=ff8fc7&labelColor=4b2a8a)](https://www.npmjs.com/package/moe2d)
+
+```sh
+npm install moe2d
+```
+
+## Documentation
+
+- [Guide](./docs/guide.md): installing and a first model, controlling the model, taps, lip sync, layout, server rendering.
+- [API](./docs/api.md): every prop, the handle, and the exported types.
+- [Architecture](./docs/architecture.md): how the library is built, and how to work on it.
+
 ## A canvas, not a widget
 
 **Moe2D** draws the model and lets you drive it: motions, expressions, the mouth, where it looks, where it is drawn. It ships no buttons, speech bubbles or panels, so the character fits your site's own design instead of bringing one of its own.
@@ -44,12 +58,6 @@ The [**Playground**](https://moe.meoki.vn) tries a model before you write any co
 It also opens your own model: drop its zip on the page, or use the folder button beside the model picker. Nothing leaves the browser.
 
 A model made for VTube Studio loads without blinking, expressions or motions, since its `.model3.json` leaves out what VTube Studio keeps in its own files. The playground fills that in on import and offers the fixed zip to download, ready to serve with **Moe2D**. See [**Models made for VTube Studio**](./docs/guide.md#models-made-for-vtube-studio).
-
-## Documentation
-
-- [Guide](./docs/guide.md): installing and a first model, controlling the model, taps, lip sync, layout, server rendering.
-- [API](./docs/api.md): every prop, the handle, and the exported types.
-- [Architecture](./docs/architecture.md): how the library is built, and how to work on it.
 
 ## License
 
